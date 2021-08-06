@@ -215,6 +215,10 @@
           <id>sigar</id>
           <url>https://repository.jboss.org/nexus/content/repositories/thirdparty-uploads/</url>
         </repository>
+        <repository>
+          <id>confluent</id>
+          <url>https://packages.confluent.io/maven/</url>
+        </repository>
     </repositories>
 
     <dependencyManagement>

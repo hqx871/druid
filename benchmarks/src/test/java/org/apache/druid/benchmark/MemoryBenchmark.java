@@ -34,6 +34,11 @@ import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
 import org.openjdk.jmh.infra.Blackhole;
+import org.openjdk.jmh.results.format.ResultFormatType;
+import org.openjdk.jmh.runner.Runner;
+import org.openjdk.jmh.runner.RunnerException;
+import org.openjdk.jmh.runner.options.Options;
+import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -165,5 +170,18 @@ public class MemoryBenchmark
   public void hash_memoryXxHash64(Blackhole blackhole)
   {
     blackhole.consume(memory1.xxHash64(0, numBytes, 0));
+  }
+
+  public static void main(String[] args) throws RunnerException
+  {
+    Options opt = new OptionsBuilder()
+        .include(MemoryBenchmark.class.getSimpleName() + "\\.hash_.*")
+        .forks(1)
+        .syncIterations(true)
+        .resultFormat(ResultFormatType.CSV)
+        .result("memory-hash.csv")
+        .build();
+
+    new Runner(opt).run();
   }
 }

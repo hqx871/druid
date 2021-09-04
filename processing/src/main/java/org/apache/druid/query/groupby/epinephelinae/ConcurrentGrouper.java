@@ -32,7 +32,7 @@ import org.apache.druid.common.guava.GuavaUtils;
 import org.apache.druid.java.util.common.CloseableIterators;
 import org.apache.druid.java.util.common.ISE;
 import org.apache.druid.java.util.common.parsers.CloseableIterator;
-import org.apache.druid.query.AbstractPrioritizedCallable;
+import org.apache.druid.query.AbstractLanePrioritizedCallable;
 import org.apache.druid.query.QueryInterruptedException;
 import org.apache.druid.query.QueryTimeoutException;
 import org.apache.druid.query.aggregation.AggregatorFactory;
@@ -86,6 +86,8 @@ public class ConcurrentGrouper<KeyType> implements Grouper<KeyType>
   private final boolean sortHasNonGroupingFields;
   private final Comparator<Grouper.Entry<KeyType>> keyObjComparator;
   private final ListeningExecutorService executor;
+  @Nullable
+  private final String lane;
   private final int priority;
   private final boolean hasQueryTimeout;
   private final long queryTimeoutAt;
@@ -109,6 +111,7 @@ public class ConcurrentGrouper<KeyType> implements Grouper<KeyType>
       final DefaultLimitSpec limitSpec,
       final boolean sortHasNonGroupingFields,
       final ListeningExecutorService executor,
+      @Nullable final String lane,
       final int priority,
       final boolean hasQueryTimeout,
       final long queryTimeoutAt
@@ -130,7 +133,7 @@ public class ConcurrentGrouper<KeyType> implements Grouper<KeyType>
         limitSpec,
         sortHasNonGroupingFields,
         executor,
-        priority,
+        lane, priority,
         hasQueryTimeout,
         queryTimeoutAt,
         groupByQueryConfig.getIntermediateCombineDegree(),
@@ -154,6 +157,7 @@ public class ConcurrentGrouper<KeyType> implements Grouper<KeyType>
       final DefaultLimitSpec limitSpec,
       final boolean sortHasNonGroupingFields,
       final ListeningExecutorService executor,
+      @Nullable String lane,
       final int priority,
       final boolean hasQueryTimeout,
       final long queryTimeoutAt,
@@ -161,6 +165,7 @@ public class ConcurrentGrouper<KeyType> implements Grouper<KeyType>
       final int numParallelCombineThreads
   )
   {
+    this.lane = lane;
     Preconditions.checkArgument(concurrencyHint > 0, "concurrencyHint > 0");
     Preconditions.checkArgument(
         concurrencyHint >= numParallelCombineThreads,
@@ -199,6 +204,7 @@ public class ConcurrentGrouper<KeyType> implements Grouper<KeyType>
           executor,
           sortHasNonGroupingFields,
           Math.min(numParallelCombineThreads, concurrencyHint),
+          lane,
           priority,
           queryTimeoutAt,
           intermediateCombineDegree
@@ -344,7 +350,7 @@ public class ConcurrentGrouper<KeyType> implements Grouper<KeyType>
     final List<ListenableFuture<CloseableIterator<Entry<KeyType>>>> futures = groupers.stream()
                 .map(grouper ->
                          executor.submit(
-                             new AbstractPrioritizedCallable<CloseableIterator<Entry<KeyType>>>(priority)
+                             new AbstractLanePrioritizedCallable<CloseableIterator<Entry<KeyType>>>(lane, priority)
                              {
                                @Override
                                public CloseableIterator<Entry<KeyType>> call()

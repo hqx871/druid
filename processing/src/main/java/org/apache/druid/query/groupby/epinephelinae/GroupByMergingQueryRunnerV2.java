@@ -41,7 +41,7 @@ import org.apache.druid.java.util.common.guava.BaseSequence;
 import org.apache.druid.java.util.common.guava.Sequence;
 import org.apache.druid.java.util.common.io.Closer;
 import org.apache.druid.java.util.common.logger.Logger;
-import org.apache.druid.query.AbstractPrioritizedQueryRunnerCallable;
+import org.apache.druid.query.AbstractLaneQueryRunnerCallable;
 import org.apache.druid.query.ChainedExecutionQueryRunner;
 import org.apache.druid.query.QueryContexts;
 import org.apache.druid.query.QueryInterruptedException;
@@ -70,13 +70,13 @@ import java.util.concurrent.TimeoutException;
  * Class that knows how to merge a collection of groupBy {@link QueryRunner} objects, called {@code queryables},
  * using a buffer provided by {@code mergeBufferPool} and a parallel executor provided by {@code exec}. Outputs a
  * fully aggregated stream of {@link ResultRow} objects. Does not apply post-aggregators.
- *
+ * <p>
  * The input {@code queryables} are expected to come from a {@link GroupByQueryEngineV2}. This code runs on data
  * servers, like Historicals.
- *
+ * <p>
  * This class has some resemblance to {@link GroupByRowProcessor}. See the javadoc of that class for a discussion of
  * similarities and differences.
- *
+ * <p>
  * Used by
  * {@link org.apache.druid.query.groupby.strategy.GroupByStrategyV2#mergeRunners(QueryProcessingPool, Iterable)}
  */
@@ -140,7 +140,11 @@ public class GroupByMergingQueryRunnerV2 implements QueryRunner<ResultRow>
         .withoutThreadUnsafeState();
 
     if (QueryContexts.isBySegment(query) || forceChainedExecution) {
-      ChainedExecutionQueryRunner<ResultRow> runner = new ChainedExecutionQueryRunner<>(queryProcessingPool, queryWatcher, queryables);
+      ChainedExecutionQueryRunner<ResultRow> runner = new ChainedExecutionQueryRunner<>(
+          queryProcessingPool,
+          queryWatcher,
+          queryables
+      );
       return runner.run(queryPlusForRunners, responseContext);
     }
 
@@ -152,6 +156,7 @@ public class GroupByMergingQueryRunnerV2 implements QueryRunner<ResultRow>
     );
 
     final int priority = QueryContexts.getPriority(query);
+    final String lane = QueryContexts.getLane(query);
 
     // Figure out timeoutAt time now, so we can apply the timeout to both the mergeBufferPool.take and the actual
     // query processing together.
@@ -180,6 +185,7 @@ public class GroupByMergingQueryRunnerV2 implements QueryRunner<ResultRow>
               final int numMergeBuffers = querySpecificConfig.getNumParallelCombineThreads() > 1 ? 2 : 1;
 
               final List<ReferenceCountingResourceHolder<ByteBuffer>> mergeBufferHolders = getMergeBuffersHolder(
+                  lane,
                   numMergeBuffers,
                   hasTimeout,
                   timeoutAt
@@ -202,6 +208,7 @@ public class GroupByMergingQueryRunnerV2 implements QueryRunner<ResultRow>
                       temporaryStorage,
                       spillMapper,
                       queryProcessingPool, // Passed as executor service
+                      lane,
                       priority,
                       hasTimeout,
                       timeoutAt,
@@ -216,59 +223,59 @@ public class GroupByMergingQueryRunnerV2 implements QueryRunner<ResultRow>
               resources.register(grouperHolder);
 
               List<ListenableFuture<AggregateResult>> futures = Lists.newArrayList(
-                      Iterables.transform(
-                          queryables,
-                          new Function<QueryRunner<ResultRow>, ListenableFuture<AggregateResult>>()
-                          {
-                            @Override
-                            public ListenableFuture<AggregateResult> apply(final QueryRunner<ResultRow> input)
-                            {
-                              if (input == null) {
-                                throw new ISE("Null queryRunner! Looks to be some segment unmapping action happening");
-                              }
-
-                              ListenableFuture<AggregateResult> future = queryProcessingPool.submitRunnerTask(
-                                  new AbstractPrioritizedQueryRunnerCallable<AggregateResult, ResultRow>(priority, input)
-                                  {
-                                    @Override
-                                    public AggregateResult call()
-                                    {
-                                      try (
-                                          // These variables are used to close releasers automatically.
-                                          @SuppressWarnings("unused")
-                                          Releaser bufferReleaser = mergeBufferHolder.increment();
-                                          @SuppressWarnings("unused")
-                                          Releaser grouperReleaser = grouperHolder.increment()
-                                      ) {
-                                        // Return true if OK, false if resources were exhausted.
-                                        return input.run(queryPlusForRunners, responseContext)
-                                            .accumulate(AggregateResult.ok(), accumulator);
-                                      }
-                                      catch (QueryInterruptedException | QueryTimeoutException e) {
-                                        throw e;
-                                      }
-                                      catch (Exception e) {
-                                        log.error(e, "Exception with one of the sequences!");
-                                        throw new RuntimeException(e);
-                                      }
-                                    }
-                                  }
-                              );
-
-                              if (isSingleThreaded) {
-                                waitForFutureCompletion(
-                                    query,
-                                    ImmutableList.of(future),
-                                    hasTimeout,
-                                    timeoutAt - System.currentTimeMillis()
-                                );
-                              }
-
-                              return future;
-                            }
+                  Iterables.transform(
+                      queryables,
+                      new Function<QueryRunner<ResultRow>, ListenableFuture<AggregateResult>>()
+                      {
+                        @Override
+                        public ListenableFuture<AggregateResult> apply(final QueryRunner<ResultRow> input)
+                        {
+                          if (input == null) {
+                            throw new ISE("Null queryRunner! Looks to be some segment unmapping action happening");
                           }
-                      )
-                  );
+
+                          ListenableFuture<AggregateResult> future = queryProcessingPool.submitRunnerTask(
+                              new AbstractLaneQueryRunnerCallable<AggregateResult, ResultRow>(lane, priority, input)
+                              {
+                                @Override
+                                public AggregateResult call()
+                                {
+                                  try (
+                                      // These variables are used to close releasers automatically.
+                                      @SuppressWarnings("unused")
+                                      Releaser bufferReleaser = mergeBufferHolder.increment();
+                                      @SuppressWarnings("unused")
+                                      Releaser grouperReleaser = grouperHolder.increment()
+                                  ) {
+                                    // Return true if OK, false if resources were exhausted.
+                                    return input.run(queryPlusForRunners, responseContext)
+                                                .accumulate(AggregateResult.ok(), accumulator);
+                                  }
+                                  catch (QueryInterruptedException | QueryTimeoutException e) {
+                                    throw e;
+                                  }
+                                  catch (Exception e) {
+                                    log.error(e, "Exception with one of the sequences!");
+                                    throw new RuntimeException(e);
+                                  }
+                                }
+                              }
+                          );
+
+                          if (isSingleThreaded) {
+                            waitForFutureCompletion(
+                                query,
+                                ImmutableList.of(future),
+                                hasTimeout,
+                                timeoutAt - System.currentTimeMillis()
+                            );
+                          }
+
+                          return future;
+                        }
+                      }
+                  )
+              );
 
               if (!isSingleThreaded) {
                 waitForFutureCompletion(query, futures, hasTimeout, timeoutAt - System.currentTimeMillis());
@@ -302,6 +309,7 @@ public class GroupByMergingQueryRunnerV2 implements QueryRunner<ResultRow>
   }
 
   private List<ReferenceCountingResourceHolder<ByteBuffer>> getMergeBuffersHolder(
+      String lane,
       int numBuffers,
       boolean hasTimeout,
       long timeoutAt
@@ -322,11 +330,11 @@ public class GroupByMergingQueryRunnerV2 implements QueryRunner<ResultRow>
         if (timeout <= 0) {
           throw new QueryTimeoutException();
         }
-        if ((mergeBufferHolder = mergeBufferPool.takeBatch(numBuffers, timeout)).isEmpty()) {
+        if ((mergeBufferHolder = mergeBufferPool.takeBatch(lane, numBuffers, timeout)).isEmpty()) {
           throw new QueryTimeoutException("Cannot acquire enough merge buffers");
         }
       } else {
-        mergeBufferHolder = mergeBufferPool.takeBatch(numBuffers);
+        mergeBufferHolder = mergeBufferPool.takeBatch(lane, numBuffers);
       }
       return mergeBufferHolder;
     }

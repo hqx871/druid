@@ -118,9 +118,7 @@ public class PrioritizedExecutorService extends AbstractExecutorService implemen
     );
     return PrioritizedListenableFutureTask.create(
         ListenableFutureTask.create(runnable, value),
-        runnable instanceof PrioritizedRunnable
-        ? ((PrioritizedRunnable) runnable).getPriority()
-        : defaultPriority,
+        getPriority(runnable),
         config.isFifo() ? queuePosition.decrementAndGet() : 0
     );
   }
@@ -134,9 +132,7 @@ public class PrioritizedExecutorService extends AbstractExecutorService implemen
     );
     return PrioritizedListenableFutureTask.create(
         ListenableFutureTask.create(callable),
-        callable instanceof PrioritizedCallable
-        ? ((PrioritizedCallable) callable).getPriority()
-        : defaultPriority,
+        getPriority(callable),
         config.isFifo() ? queuePosition.decrementAndGet() : 0
     );
   }
@@ -199,104 +195,122 @@ public class PrioritizedExecutorService extends AbstractExecutorService implemen
   {
     return delegateQueue.size();
   }
-}
 
-class PrioritizedListenableFutureTask<V> implements RunnableFuture<V>,
-    ListenableFuture<V>,
-    PrioritizedRunnable,
-    Comparable<PrioritizedListenableFutureTask>
-{
-  // NOTE: For priority HIGHER numeric value means more priority. As such we swap left and right in the compares
-  private static final Comparator<PrioritizedListenableFutureTask> PRIORITY_COMPARATOR = new Ordering<PrioritizedListenableFutureTask>()
+  protected int getPriority(Runnable runnable)
   {
-    @Override
-    public int compare(PrioritizedListenableFutureTask left, PrioritizedListenableFutureTask right)
+    return runnable instanceof PrioritizedRunnable
+           ? ((PrioritizedRunnable) runnable).getPriority()
+           : defaultPriority;
+  }
+
+  protected <T> int getPriority(Callable<T> callable)
+  {
+    return callable instanceof PrioritizedCallable
+           ? ((PrioritizedCallable) callable).getPriority()
+           : defaultPriority;
+  }
+
+  protected static class PrioritizedListenableFutureTask<V> implements RunnableFuture<V>,
+      ListenableFuture<V>,
+      PrioritizedRunnable,
+      Comparable<PrioritizedListenableFutureTask>
+  {
+    // NOTE: For priority HIGHER numeric value means more priority. As such we swap left and right in the compares
+    public static final Comparator<PrioritizedListenableFutureTask> PRIORITY_COMPARATOR = new Ordering<PrioritizedListenableFutureTask>()
     {
-      return Integer.compare(right.getPriority(), left.getPriority());
-    }
-  }.compound(
-      new Ordering<PrioritizedListenableFutureTask>()
+      @Override
+      public int compare(PrioritizedListenableFutureTask left, PrioritizedListenableFutureTask right)
       {
-        @Override
-        public int compare(PrioritizedListenableFutureTask left, PrioritizedListenableFutureTask right)
-        {
-          return Long.compare(right.getInsertionPlace(), left.getInsertionPlace());
-        }
+        return Integer.compare(right.getPriority(), left.getPriority());
       }
-  );
+    }.compound(
+        new Ordering<PrioritizedListenableFutureTask>()
+        {
+          @Override
+          public int compare(PrioritizedListenableFutureTask left, PrioritizedListenableFutureTask right)
+          {
+            return Long.compare(right.getInsertionPlace(), left.getInsertionPlace());
+          }
+        }
+    );
 
-  public static <V> PrioritizedListenableFutureTask<V> create(ListenableFutureTask<V> task, int priority, long position)
-  {
-    return new PrioritizedListenableFutureTask<>(task, priority, position);
-  }
+    public static <V> PrioritizedListenableFutureTask<V> create(
+        ListenableFutureTask<V> task,
+        int priority,
+        long position
+    )
+    {
+      return new PrioritizedListenableFutureTask<>(task, priority, position);
+    }
 
-  private final ListenableFutureTask<V> delegate;
-  private final int priority;
-  private final long insertionPlace;
+    private final ListenableFutureTask<V> delegate;
+    private final int priority;
+    private final long insertionPlace;
 
-  PrioritizedListenableFutureTask(ListenableFutureTask<V> delegate, int priority, long position)
-  {
-    this.delegate = delegate;
-    this.priority = priority;
-    this.insertionPlace = position; // Long.MAX_VALUE will always be "highest"
-  }
+    public PrioritizedListenableFutureTask(ListenableFutureTask<V> delegate, int priority, long position)
+    {
+      this.delegate = delegate;
+      this.priority = priority;
+      this.insertionPlace = position; // Long.MAX_VALUE will always be "highest"
+    }
 
-  @Override
-  public void run()
-  {
-    delegate.run();
-  }
+    @Override
+    public void run()
+    {
+      delegate.run();
+    }
 
-  @Override
-  public boolean cancel(boolean mayInterruptIfRunning)
-  {
-    return delegate.cancel(mayInterruptIfRunning);
-  }
+    @Override
+    public boolean cancel(boolean mayInterruptIfRunning)
+    {
+      return delegate.cancel(mayInterruptIfRunning);
+    }
 
-  @Override
-  public boolean isCancelled()
-  {
-    return delegate.isCancelled();
-  }
+    @Override
+    public boolean isCancelled()
+    {
+      return delegate.isCancelled();
+    }
 
-  @Override
-  public boolean isDone()
-  {
-    return delegate.isDone();
-  }
+    @Override
+    public boolean isDone()
+    {
+      return delegate.isDone();
+    }
 
-  @Override
-  public V get() throws InterruptedException, ExecutionException
-  {
-    return delegate.get();
-  }
+    @Override
+    public V get() throws InterruptedException, ExecutionException
+    {
+      return delegate.get();
+    }
 
-  @Override
-  public V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException
-  {
-    return delegate.get(timeout, unit);
-  }
+    @Override
+    public V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException
+    {
+      return delegate.get(timeout, unit);
+    }
 
-  @Override
-  public void addListener(Runnable listener, Executor executor)
-  {
-    delegate.addListener(listener, executor);
-  }
+    @Override
+    public void addListener(Runnable listener, Executor executor)
+    {
+      delegate.addListener(listener, executor);
+    }
 
-  @Override
-  public int getPriority()
-  {
-    return priority;
-  }
+    @Override
+    public int getPriority()
+    {
+      return priority;
+    }
 
-  protected long getInsertionPlace()
-  {
-    return insertionPlace;
-  }
+    private long getInsertionPlace()
+    {
+      return insertionPlace;
+    }
 
-  @Override
-  public int compareTo(PrioritizedListenableFutureTask otherTask)
-  {
-    return PRIORITY_COMPARATOR.compare(this, otherTask);
+    @Override
+    public int compareTo(PrioritizedListenableFutureTask otherTask)
+    {
+      return PRIORITY_COMPARATOR.compare(this, otherTask);
+    }
   }
 }

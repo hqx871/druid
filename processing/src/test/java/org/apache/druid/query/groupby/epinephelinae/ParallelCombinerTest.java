@@ -97,6 +97,7 @@ public class ParallelCombinerTest
         MoreExecutors.listeningDecorator(SERVICE),
         false,
         THREAD_NUM,
+        null,
         0, // default priority
         0, // default timeout
         4

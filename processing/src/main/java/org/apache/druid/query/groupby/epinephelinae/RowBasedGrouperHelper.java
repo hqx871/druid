@@ -130,6 +130,7 @@ public class RowBasedGrouperHelper
         temporaryStorage,
         spillMapper,
         null,
+        null,
         UNKNOWN_THREAD_PRIORITY,
         false,
         UNKNOWN_TIMEOUT,
@@ -162,6 +163,7 @@ public class RowBasedGrouperHelper
    * @param spillMapper         object mapper used for spilling from the Grouper
    * @param grouperSorter       executor service used for parallel combining. Unused if concurrencyHint = -1, and may
    *                            be null in that case
+   * @param lane                query lane
    * @param priority            query priority
    * @param hasQueryTimeout     whether or not this query has a timeout
    * @param queryTimeoutAt      when this query times out, in milliseconds since the epoch
@@ -177,6 +179,7 @@ public class RowBasedGrouperHelper
       final LimitedTemporaryStorage temporaryStorage,
       final ObjectMapper spillMapper,
       @Nullable final ListeningExecutorService grouperSorter,
+      @Nullable final String lane,
       final int priority,
       final boolean hasQueryTimeout,
       final long queryTimeoutAt,
@@ -283,6 +286,7 @@ public class RowBasedGrouperHelper
           limitSpec,
           sortHasNonGroupingFields,
           grouperSorter,
+          lane,
           priority,
           hasQueryTimeout,
           queryTimeoutAt

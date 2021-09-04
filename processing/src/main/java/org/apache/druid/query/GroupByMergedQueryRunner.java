@@ -92,6 +92,7 @@ public class GroupByMergedQueryRunner<T> implements QueryRunner<T>
     final Pair<Queue, Accumulator<Queue, T>> bySegmentAccumulatorPair = GroupByQueryHelper.createBySegmentAccumulatorPair();
     final boolean bySegment = QueryContexts.isBySegment(query);
     final int priority = QueryContexts.getPriority(query);
+    final String lane = QueryContexts.getLane(query);
     final QueryPlus<T> threadSafeQueryPlus = queryPlus.withoutThreadUnsafeState();
     final List<ListenableFuture<Void>> futures =
         Lists.newArrayList(
@@ -107,7 +108,7 @@ public class GroupByMergedQueryRunner<T> implements QueryRunner<T>
                     }
 
                     ListenableFuture<Void> future = queryProcessingPool.submitRunnerTask(
-                        new AbstractPrioritizedQueryRunnerCallable<Void, T>(priority, input)
+                        new AbstractLaneQueryRunnerCallable<Void, T>(lane, priority, input)
                         {
                           @Override
                           public Void call()
@@ -115,10 +116,10 @@ public class GroupByMergedQueryRunner<T> implements QueryRunner<T>
                             try {
                               if (bySegment) {
                                 input.run(threadSafeQueryPlus, responseContext)
-                                    .accumulate(bySegmentAccumulatorPair.lhs, bySegmentAccumulatorPair.rhs);
+                                     .accumulate(bySegmentAccumulatorPair.lhs, bySegmentAccumulatorPair.rhs);
                               } else {
                                 input.run(threadSafeQueryPlus, responseContext)
-                                    .accumulate(indexAccumulatorPair.lhs, indexAccumulatorPair.rhs);
+                                     .accumulate(indexAccumulatorPair.lhs, indexAccumulatorPair.rhs);
                               }
 
                               return null;

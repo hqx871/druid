@@ -34,7 +34,7 @@ import org.apache.druid.java.util.common.ISE;
 import org.apache.druid.java.util.common.Pair;
 import org.apache.druid.java.util.common.io.Closer;
 import org.apache.druid.java.util.common.parsers.CloseableIterator;
-import org.apache.druid.query.AbstractPrioritizedCallable;
+import org.apache.druid.query.AbstractLanePrioritizedCallable;
 import org.apache.druid.query.QueryInterruptedException;
 import org.apache.druid.query.aggregation.AggregatorFactory;
 import org.apache.druid.query.dimension.DimensionSpec;
@@ -48,7 +48,6 @@ import org.apache.druid.segment.ObjectColumnSelector;
 import org.apache.druid.segment.column.ColumnCapabilities;
 
 import javax.annotation.Nullable;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -92,6 +91,7 @@ public class ParallelCombiner<KeyType>
   private final ListeningExecutorService executor;
   private final Comparator<Entry<KeyType>> keyObjComparator;
   private final int concurrencyHint;
+  @Nullable private final String lane;
   private final int priority;
   private final long queryTimeoutAt;
 
@@ -106,6 +106,7 @@ public class ParallelCombiner<KeyType>
       ListeningExecutorService executor,
       boolean sortHasNonGroupingFields,
       int concurrencyHint,
+      @Nullable String lane,
       int priority,
       long queryTimeoutAt,
       int intermediateCombineDegree
@@ -115,6 +116,7 @@ public class ParallelCombiner<KeyType>
     this.combiningFactories = combiningFactories;
     this.combineKeySerdeFactory = combineKeySerdeFactory;
     this.executor = executor;
+    this.lane = lane;
     this.keyObjComparator = combineKeySerdeFactory.objectComparator(sortHasNonGroupingFields);
     this.concurrencyHint = concurrencyHint;
     this.priority = priority;
@@ -397,7 +399,7 @@ public class ParallelCombiner<KeyType>
     grouper.init(); // init() must be called before iterator(), so cannot be called inside the below callable.
 
     final ListenableFuture future = executor.submit(
-        new AbstractPrioritizedCallable<Void>(priority)
+        new AbstractLanePrioritizedCallable<Void>(lane, priority)
         {
           @Override
           public Void call()

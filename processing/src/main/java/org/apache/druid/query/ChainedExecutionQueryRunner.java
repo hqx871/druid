@@ -79,6 +79,7 @@ public class ChainedExecutionQueryRunner<T> implements QueryRunner<T>
   {
     Query<T> query = queryPlus.getQuery();
     final int priority = QueryContexts.getPriority(query);
+    final String lane = QueryContexts.getLane(query);
     final Ordering ordering = query.getResultOrdering();
     final QueryPlus<T> threadSafeQueryPlus = queryPlus.withoutThreadUnsafeState();
     return new BaseSequence<T, Iterator<T>>(
@@ -98,7 +99,7 @@ public class ChainedExecutionQueryRunner<T> implements QueryRunner<T>
                           }
 
                           return queryProcessingPool.submitRunnerTask(
-                              new AbstractPrioritizedQueryRunnerCallable<Iterable<T>, T>(priority, input)
+                              new AbstractLaneQueryRunnerCallable<Iterable<T>, T>(lane, priority, input)
                               {
                                 @Override
                                 public Iterable<T> call()

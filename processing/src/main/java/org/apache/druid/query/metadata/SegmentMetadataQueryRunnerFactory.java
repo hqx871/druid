@@ -28,7 +28,7 @@ import org.apache.druid.java.util.common.granularity.Granularity;
 import org.apache.druid.java.util.common.guava.Sequence;
 import org.apache.druid.java.util.common.guava.Sequences;
 import org.apache.druid.java.util.common.logger.Logger;
-import org.apache.druid.query.AbstractPrioritizedQueryRunnerCallable;
+import org.apache.druid.query.AbstractLaneQueryRunnerCallable;
 import org.apache.druid.query.ConcatQueryRunner;
 import org.apache.druid.query.Query;
 import org.apache.druid.query.QueryContexts;
@@ -206,9 +206,14 @@ public class SegmentMetadataQueryRunnerFactory implements QueryRunnerFactory<Seg
                   {
                     final Query<SegmentAnalysis> query = queryPlus.getQuery();
                     final int priority = QueryContexts.getPriority(query);
+                    final String lane = QueryContexts.getLane(query);
                     final QueryPlus<SegmentAnalysis> threadSafeQueryPlus = queryPlus.withoutThreadUnsafeState();
                     ListenableFuture<Sequence<SegmentAnalysis>> future = queryProcessingPool.submitRunnerTask(
-                        new AbstractPrioritizedQueryRunnerCallable<Sequence<SegmentAnalysis>, SegmentAnalysis>(priority, input)
+                        new AbstractLaneQueryRunnerCallable<Sequence<SegmentAnalysis>, SegmentAnalysis>(
+                            lane,
+                            priority,
+                            input
+                        )
                         {
                           @Override
                           public Sequence<SegmentAnalysis> call()
@@ -236,7 +241,10 @@ public class SegmentMetadataQueryRunnerFactory implements QueryRunnerFactory<Seg
                     catch (TimeoutException e) {
                       log.info("Query timeout, cancelling pending results for query id [%s]", query.getId());
                       future.cancel(true);
-                      throw new QueryTimeoutException(StringUtils.nonStrictFormat("Query [%s] timed out", query.getId()));
+                      throw new QueryTimeoutException(StringUtils.nonStrictFormat(
+                          "Query [%s] timed out",
+                          query.getId()
+                      ));
                     }
                     catch (ExecutionException e) {
                       throw new RuntimeException(e);

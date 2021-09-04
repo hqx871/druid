@@ -39,12 +39,12 @@ import java.util.concurrent.Future;
 
 public class BlockingPoolTest
 {
-  private static final String firstResourceGroup = "group1";
   private ExecutorService service;
 
   private CloseableDefaultBlockingPool<Integer> nonGroupingPool;
   private CloseableDefaultBlockingPool<Integer> emptyPool;
   private CloseableDefaultBlockingPool<Integer> groupingPool;
+  private final String firstResourceGroup = "group1";
 
   @Rule
   public ExpectedException expectedException = ExpectedException.none();

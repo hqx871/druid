@@ -55,11 +55,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 @RunWith(Parameterized.class)
 public class MultilevelQueueExecutorServiceTest
 {
-  private static final String defaultLane = null;
-  private static final String singleThreadLane = "singleThreadLane";
-  private static final String twoThreadLane = "twoThreadLane";
+  private final String defaultLane = null;
+  private final String singleThreadLane = "singleThreadLane";
+  private final String twoThreadLane = "twoThreadLane";
 
-  private static final String[] lanes = new String[]{
+  private final String[] lanes = new String[]{
       defaultLane, twoThreadLane, singleThreadLane
   };
 

@@ -2,7 +2,7 @@
     <configuration default="false" name="MiddleManager" type="Application" factoryName="Application">
         <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
         <option name="MAIN_CLASS_NAME" value="org.apache.druid.cli.Main" />
-        <option name="VM_PARAMETERS" value="-server -Duser.timezone=Asia/Shanghai -Dfile.encoding=UTF-8 -Xmx2G -XX:MaxJavaStackTraceDepth=9999 -XX:+UseG1GC -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+PrintAdaptiveSizePolicy -XX:+PrintReferenceGC -verbose:gc -XX:+PrintFlagsFinal -Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager -Dorg.jboss.logging.provider=slf4j -Dlog4j.configurationFile=$PROJECT_DIR$/core/src/main/resources/log4j2.debug.xml -Ddruid.properties.file=$PROJECT_DIR$/dev/conf/middleManager/runtime.properties" />
+        <option name="VM_PARAMETERS" value="-server -Duser.timezone=Asia/Shanghai -Dfile.encoding=UTF-8 -Xmx2G -XX:MaxJavaStackTraceDepth=9999 -XX:+UseG1GC -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+PrintAdaptiveSizePolicy -XX:+PrintReferenceGC -verbose:gc -XX:+PrintFlagsFinal -Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager -Dorg.jboss.logging.provider=slf4j -Dlog4j.configurationFile=$PROJECT_DIR$/dev/conf/_common/log4j2.xml -Ddruid.properties.file=$PROJECT_DIR$/dev/conf/middleManager/runtime.properties" />
         <option name="PROGRAM_PARAMETERS" value="server middleManager" />
         <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$" />
         <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />

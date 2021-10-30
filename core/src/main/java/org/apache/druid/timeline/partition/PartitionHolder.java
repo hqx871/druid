@@ -119,6 +119,23 @@ public class PartitionHolder<T extends Overshadowable<T>> implements Iterable<Pa
     return overshadowableManager.getChunk(partitionNum);
   }
 
+  public boolean isOvershadowed(T chunk)
+  {
+    List<AtomicUpdateGroup<T>> groups = overshadowableManager.findOvershadows(
+        OvershadowableManager.RootPartitionRange.of(chunk.getStartRootPartitionId(), chunk.getEndRootPartitionId()),
+        chunk.getMinorVersion(),
+        OvershadowableManager.State.VISIBLE
+    );
+    for (AtomicUpdateGroup<T> group : groups) {
+      for (PartitionChunk<T> partitionChunk : group.getChunks()) {
+        if (partitionChunk.getObject().overshadows(chunk)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   @Override
   public Iterator<PartitionChunk<T>> iterator()
   {

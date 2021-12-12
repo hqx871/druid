@@ -465,7 +465,7 @@ public class ParallelMergeCombiningSequence<T> extends YieldingSequenceBase<T>
 
       final int computedNumParallelTasks = Math.max(computedOptimalParallelism, 1);
 
-      LOG.debug(
+      LOG.info(
           "Computed parallel tasks: [%s]; ForkJoinPool details - sequence parallelism: [%s] "
           + "active threads: [%s] running threads: [%s] queued submissions: [%s] queued tasks: [%s] "
           + "pool parallelism: [%s] pool size: [%s] steal count: [%s]",

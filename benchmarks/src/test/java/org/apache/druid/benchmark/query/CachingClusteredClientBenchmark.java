@@ -28,6 +28,10 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.druid.client.CachingClusteredClient;
 import org.apache.druid.client.DruidServer;
 import org.apache.druid.client.ImmutableDruidServer;
@@ -54,6 +58,10 @@ import org.apache.druid.java.util.common.granularity.Granularity;
 import org.apache.druid.java.util.common.guava.Sequence;
 import org.apache.druid.java.util.common.io.Closer;
 import org.apache.druid.java.util.common.logger.Logger;
+import org.apache.druid.java.util.emitter.EmittingLogger;
+import org.apache.druid.java.util.emitter.core.Emitter;
+import org.apache.druid.java.util.emitter.core.LoggingEmitter;
+import org.apache.druid.java.util.emitter.service.ServiceEmitter;
 import org.apache.druid.math.expr.ExprMacroTable;
 import org.apache.druid.query.BySegmentQueryRunner;
 import org.apache.druid.query.DefaultQueryRunnerFactoryConglomerate;
@@ -61,8 +69,10 @@ import org.apache.druid.query.DruidProcessingConfig;
 import org.apache.druid.query.Druids;
 import org.apache.druid.query.FinalizeResultsQueryRunner;
 import org.apache.druid.query.FluentQueryRunnerBuilder;
+import org.apache.druid.query.MetricsEmittingQueryRunner;
 import org.apache.druid.query.Query;
 import org.apache.druid.query.QueryContexts;
+import org.apache.druid.query.QueryMetrics;
 import org.apache.druid.query.QueryPlus;
 import org.apache.druid.query.QueryRunner;
 import org.apache.druid.query.QueryRunnerFactory;
@@ -72,6 +82,7 @@ import org.apache.druid.query.QueryToolChest;
 import org.apache.druid.query.QueryToolChestWarehouse;
 import org.apache.druid.query.Result;
 import org.apache.druid.query.aggregation.LongSumAggregatorFactory;
+import org.apache.druid.query.aggregation.datasketches.hll.HllSketchBuildAggregatorFactory;
 import org.apache.druid.query.context.ResponseContext;
 import org.apache.druid.query.dimension.DefaultDimensionSpec;
 import org.apache.druid.query.expression.TestExprMacroTable;
@@ -107,7 +118,6 @@ import org.apache.druid.segment.generator.SegmentGenerator;
 import org.apache.druid.segment.join.MapJoinableFactory;
 import org.apache.druid.server.QueryStackTests;
 import org.apache.druid.server.coordination.ServerType;
-import org.apache.druid.server.metrics.NoopServiceEmitter;
 import org.apache.druid.timeline.DataSegment;
 import org.apache.druid.timeline.DataSegment.PruneSpecsHolder;
 import org.apache.druid.timeline.SegmentId;
@@ -128,17 +138,22 @@ import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.annotations.Warmup;
 import org.openjdk.jmh.infra.Blackhole;
+import org.openjdk.jmh.runner.RunnerException;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 
@@ -149,7 +164,7 @@ import java.util.concurrent.TimeUnit;
 public class CachingClusteredClientBenchmark
 {
   private static final Logger LOG = new Logger(CachingClusteredClientBenchmark.class);
-  private static final int PROCESSING_BUFFER_SIZE = 10 * 1024 * 1024; // ~10MiB
+  private static final int PROCESSING_BUFFER_SIZE = 100 * 1024 * 1024; // ~10MiB
   private static final String DATA_SOURCE = "ds";
 
   public static final ObjectMapper JSON_MAPPER;
@@ -157,6 +172,9 @@ public class CachingClusteredClientBenchmark
   static {
     NullHandling.initializeForTests();
   }
+
+  @Param({"24"})
+  private int numSegements;
 
   @Param({"8", "24"})
   private int numServers;
@@ -175,6 +193,8 @@ public class CachingClusteredClientBenchmark
   private CachingClusteredClient cachingClusteredClient;
   private ExecutorService processingPool;
   private ForkJoinPool forkJoinPool;
+  private Emitter emitter;
+  private ServiceEmitter serviceEmitter;
 
   private boolean parallelCombine;
 
@@ -199,17 +219,18 @@ public class CachingClusteredClientBenchmark
     );
   }
 
-  @Setup(Level.Trial)
-  public void setup()
+  private static Map<DataSegment, QueryableIndex> generateIndex(int numServers, Closer closer, int rowsPerSegment)
   {
     final String schemaName = "basic";
-
-    parallelCombine = parallelism > 0;
 
     GeneratorSchemaInfo schemaInfo = GeneratorBasicSchemas.SCHEMA_MAP.get(schemaName);
 
     Map<DataSegment, QueryableIndex> queryableIndexes = Maps.newHashMapWithExpectedSize(numServers);
 
+    ListeningExecutorService executorService = MoreExecutors.listeningDecorator(
+        Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())
+    );
+    List<ListenableFuture<QueryableIndex>> futures = new ArrayList<>();
     for (int i = 0; i < numServers; i++) {
 
       final DataSegment dataSegment = DataSegment.builder()
@@ -220,19 +241,42 @@ public class CachingClusteredClientBenchmark
                                                  .size(0)
                                                  .build();
       final SegmentGenerator segmentGenerator = closer.register(new SegmentGenerator());
-      LOG.info(
+      LOG.debug(
           "Starting benchmark setup using cacheDir[%s], rows[%,d].",
           segmentGenerator.getCacheDir(),
           rowsPerSegment
       );
-      final QueryableIndex index = segmentGenerator.generate(
-          dataSegment,
-          schemaInfo,
-          Granularities.NONE,
-          rowsPerSegment
-      );
-      queryableIndexes.put(dataSegment, index);
+
+      futures.add(executorService.submit(() -> {
+        final QueryableIndex index = segmentGenerator.generate(
+            dataSegment,
+            schemaInfo,
+            Granularities.NONE,
+            rowsPerSegment
+        );
+        queryableIndexes.put(dataSegment, index);
+        return index;
+      }));
     }
+    try {
+      Futures.allAsList(futures).get();
+      executorService.shutdown();
+    }
+    catch (InterruptedException | ExecutionException ignore) {
+    }
+    return queryableIndexes;
+  }
+
+  @Setup(Level.Trial)
+  public void setup()
+  {
+    Map<DataSegment, QueryableIndex> queryableIndexes = generateIndex(numSegements, closer, rowsPerSegment);
+    setup(queryableIndexes);
+  }
+
+  private void setup(Map<DataSegment, QueryableIndex> queryableIndexes)
+  {
+    parallelCombine = parallelism > 0;
 
     final DruidProcessingConfig processingConfig = new DruidProcessingConfig()
     {
@@ -316,10 +360,15 @@ public class CachingClusteredClientBenchmark
     };
 
     SimpleServerView serverView = new SimpleServerView();
+    //int serverSuffx = 1;
+    List<DruidServer> servers = new ArrayList<>(numServers);
+    for (int serverSuffx = 1; serverSuffx <= numServers; serverSuffx++) {
+      servers.add(createServer(serverSuffx));
+    }
     int serverSuffx = 1;
     for (Entry<DataSegment, QueryableIndex> entry : queryableIndexes.entrySet()) {
       serverView.addServer(
-          createServer(serverSuffx++),
+          servers.get((serverSuffx++) % numServers),
           entry.getKey(),
           entry.getValue()
       );
@@ -327,11 +376,19 @@ public class CachingClusteredClientBenchmark
 
     processingPool = Execs.multiThreaded(processingConfig.getNumThreads(), "caching-clustered-client-benchmark");
     forkJoinPool = new ForkJoinPool(
-        (int) Math.ceil(Runtime.getRuntime().availableProcessors() * 0.75),
+        //(int) Math.ceil(Runtime.getRuntime().availableProcessors() * 0.75),
+        32,
         ForkJoinPool.defaultForkJoinWorkerThreadFactory,
         null,
         true
     );
+
+    emitter = new LoggingEmitter(LOG, LoggingEmitter.Level.INFO, JSON_MAPPER);
+    serviceEmitter = new ServiceEmitter("druid/broker", "localhost", emitter);
+    EmittingLogger.registerEmitter(serviceEmitter);
+    emitter.start();
+    serviceEmitter.start();
+
     cachingClusteredClient = new CachingClusteredClient(
         toolChestWarehouse,
         serverView,
@@ -344,7 +401,8 @@ public class CachingClusteredClientBenchmark
         forkJoinPool,
         QueryStackTests.DEFAULT_NOOP_SCHEDULER,
         new MapJoinableFactory(ImmutableSet.of(), ImmutableMap.of()),
-        new NoopServiceEmitter()
+        //new NoopServiceEmitter()
+        serviceEmitter
     );
   }
 
@@ -389,6 +447,9 @@ public class CachingClusteredClientBenchmark
   @TearDown(Level.Trial)
   public void tearDown() throws IOException
   {
+    serviceEmitter.close();
+    emitter.close();
+
     closer.close();
     processingPool.shutdown();
     forkJoinPool.shutdownNow();
@@ -457,15 +518,33 @@ public class CachingClusteredClientBenchmark
         .setDataSource(DATA_SOURCE)
         .setQuerySegmentSpec(basicSchemaIntervalSpec)
         .setDimensions(
-            new DefaultDimensionSpec("dimZipf", null),
-            new DefaultDimensionSpec("dimSequential", null)
+            //new DefaultDimensionSpec("dimZipf", null),
+            //new DefaultDimensionSpec("dimSequential", null)
+            new DefaultDimensionSpec("dimEnumerated", null),
+            new DefaultDimensionSpec("dimEnumerated2", null)
         )
-        .setAggregatorSpecs(new LongSumAggregatorFactory("sumLongSequential", "sumLongSequential"))
+        .setAggregatorSpecs(
+//            new HllSketchBuildAggregatorFactory(
+//                "hllDimHyperUnique",
+//                "dimHyperUnique",
+//                15,
+//                "HLL_8",
+//                false
+//            ),
+            new HllSketchBuildAggregatorFactory(
+                "hllLongSequential",
+                "sumLongSequential",
+                15,
+                "HLL_8",
+                false
+            )
+        )
         .setGranularity(Granularity.fromString(queryGranularity))
         .setContext(
             ImmutableMap.of(
                 QueryContexts.BROKER_PARALLEL_MERGE_KEY, parallelCombine,
-                QueryContexts.BROKER_PARALLELISM, parallelism
+                QueryContexts.BROKER_PARALLELISM, parallelism,
+                "queryId", UUID.randomUUID().toString()
             )
         )
         .build();
@@ -477,15 +556,49 @@ public class CachingClusteredClientBenchmark
     }
   }
 
+  public static void main(String[] args) throws RunnerException, IOException
+  {
+    int rowPerSegment = 55;
+    Closer closer = Closer.create();
+    Map<DataSegment, QueryableIndex> queryableIndexMap = generateIndex(24 * 15, closer, rowPerSegment);
+    for (int parallelism : new int[]{8, 4, 1, 0}) {
+      for (int numServers : new int[]{24, 8, 2, 1}) {
+        CachingClusteredClientBenchmark benchmark = new CachingClusteredClientBenchmark();
+        benchmark.parallelism = parallelism;
+        benchmark.rowsPerSegment = rowPerSegment;
+        benchmark.numServers = numServers;
+        benchmark.queryGranularity = "minute";
+        benchmark.setup(queryableIndexMap);
+        for (int i = 0; i < 10; i++) {
+          benchmark.groupByQuery(
+              new Blackhole(
+                  "Today's password is swordfish. I understand instantiating Blackholes directly is dangerous.")
+          );
+        }
+        benchmark.tearDown();
+      }
+    }
+    closer.close();
+  }
+
   private <T> List<T> runQuery()
   {
+    QueryToolChest toolChest = toolChestWarehouse.getToolChest(query);
     //noinspection unchecked
-    QueryRunner<T> theRunner = new FluentQueryRunnerBuilder<T>(toolChestWarehouse.getToolChest(query))
+    QueryRunner<T> theRunner = new FluentQueryRunnerBuilder<T>(toolChest)
         .create(cachingClusteredClient.getQueryRunnerForIntervals(query, query.getIntervals()))
         .applyPreMergeDecoration()
         .mergeResults()
         .applyPostMergeDecoration();
 
+    theRunner = new MetricsEmittingQueryRunner<>(
+        serviceEmitter,
+        toolChest,
+        theRunner,
+        QueryMetrics::reportQueryTime,
+        a -> {
+        }
+    );
     //noinspection unchecked
     Sequence<T> queryResult = theRunner.run(QueryPlus.wrap(query), ResponseContext.createEmpty());
 

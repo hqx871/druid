@@ -84,7 +84,7 @@ public class SegmentGenerator implements Closeable
         this.cacheDir = new File(userConfiguredCacheDir);
         this.cleanupCacheDir = false;
       } else {
-        log.warn("No cache directory provided; benchmark data caching is disabled. "
+        log.debug("No cache directory provided; benchmark data caching is disabled. "
                  + "Set the 'druid.benchmark.cacheDir' property or 'DRUID_BENCHMARK_CACHE_DIR' environment variable "
                  + "to use caching.");
         this.cacheDir = FileUtils.createTempDir();
@@ -129,7 +129,7 @@ public class SegmentGenerator implements Closeable
       }
     }
 
-    log.info("Writing segment with hash[%s] to directory[%s].", dataHash, outDir);
+    log.debug("Writing segment with hash[%s] to directory[%s].", dataHash, outDir);
 
     final DataGenerator dataGenerator = new DataGenerator(
         schemaInfo.getColumnSchemas(),
@@ -153,7 +153,7 @@ public class SegmentGenerator implements Closeable
       rows.add(row);
 
       if ((i + 1) % 20000 == 0) {
-        log.info("%,d/%,d rows generated for[%s].", i + 1, numRows, dataSegment);
+        log.debug("%,d/%,d rows generated for[%s].", i + 1, numRows, dataSegment);
       }
 
       if (rows.size() % MAX_ROWS_IN_MEMORY == 0) {
@@ -162,7 +162,7 @@ public class SegmentGenerator implements Closeable
       }
     }
 
-    log.info("%,d/%,d rows generated for[%s].", numRows, numRows, dataSegment);
+    log.debug("%,d/%,d rows generated for[%s].", numRows, numRows, dataSegment);
 
     if (rows.size() > 0) {
       indexes.add(makeIndex(dataSegment.getId(), dataHash, indexes.size(), rows, indexSchema));
@@ -201,7 +201,7 @@ public class SegmentGenerator implements Closeable
       }
     }
 
-    log.info("Finished writing segment[%s] to[%s]", dataSegment, outDir);
+    log.debug("Finished writing segment[%s] to[%s]", dataSegment, outDir);
 
     return retVal;
   }

@@ -302,42 +302,48 @@ public class DefaultQueryMetrics<QueryType extends Query<?>> implements QueryMet
   public QueryMetrics<QueryType> reportParallelMergeParallelism(int parallelism)
   {
     // Don't emit by default.
-    return this;
+    // return this;
+    return reportMetric("query/parallelMerge/parallelism", parallelism);
   }
 
   @Override
   public QueryMetrics<QueryType> reportParallelMergeInputSequences(long numSequences)
   {
     // Don't emit by default.
-    return this;
+    // return this;
+    return reportMetric("query/parallelMerge/numSequences", numSequences);
   }
 
   @Override
   public QueryMetrics<QueryType> reportParallelMergeInputRows(long numRows)
   {
     // Don't emit by default.
-    return this;
+    // return this;
+    return reportMetric("query/parallelMerge/inputRows", numRows);
   }
 
   @Override
   public QueryMetrics<QueryType> reportParallelMergeOutputRows(long numRows)
   {
     // Don't emit by default.
-    return this;
+    // return this;
+    return reportMetric("query/parallelMerge/outputRows", numRows);
   }
 
   @Override
   public QueryMetrics<QueryType> reportParallelMergeTaskCount(long numTasks)
   {
     // Don't emit by default.
-    return this;
+    // return this;
+    return reportMetric("query/parallelMerge/numTasks", numTasks);
   }
 
   @Override
   public QueryMetrics<QueryType> reportParallelMergeTotalCpuTime(long timeNs)
   {
     // Don't emit by default.
-    return this;
+    // return this;
+    return reportMetric("query/parallelMerge/cpuTimeNs", timeNs);
   }
 
   @Override

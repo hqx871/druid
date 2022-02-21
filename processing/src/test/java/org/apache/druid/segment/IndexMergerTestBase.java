@@ -538,12 +538,12 @@ public class IndexMergerTestBase extends InitializedNullHandlingTest
     DictionaryEncodedColumn encodedColumn = (DictionaryEncodedColumn) index.getColumnHolder("dim2").getColumn();
     Object obj;
     if (encodedColumn.hasMultipleValues()) {
-      Field field = StringDictionaryEncodedColumn.class.getDeclaredField("multiValueColumn");
+      Field field = StringDictionaryEncodedColumn.class.getSuperclass().getDeclaredField("multiValueColumn");
       field.setAccessible(true);
 
       obj = field.get(encodedColumn);
     } else {
-      Field field = StringDictionaryEncodedColumn.class.getDeclaredField("column");
+      Field field = StringDictionaryEncodedColumn.class.getSuperclass().getDeclaredField("column");
       field.setAccessible(true);
 
       obj = field.get(encodedColumn);

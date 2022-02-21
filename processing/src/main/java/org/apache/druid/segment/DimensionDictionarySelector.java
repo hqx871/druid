@@ -29,7 +29,7 @@ import java.nio.ByteBuffer;
  * {@link org.apache.druid.segment.vector.SingleValueDimensionVectorSelector}, and
  * {@link org.apache.druid.segment.vector.MultiValueDimensionVectorSelector}.
  */
-public interface DimensionDictionarySelector
+public interface DimensionDictionarySelector<ValType extends Comparable<ValType>>
 {
   int CARDINALITY_UNKNOWN = -1;
 
@@ -147,5 +147,5 @@ public interface DimensionDictionarySelector
    * Returns {@link IdLookup} if available for this DimensionSelector, or null.
    */
   @Nullable
-  IdLookup<String> idLookup();
+  IdLookup<ValType> idLookup();
 }

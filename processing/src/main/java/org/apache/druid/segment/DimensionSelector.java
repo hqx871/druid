@@ -223,7 +223,7 @@ public interface DimensionSelector extends ColumnValueSelector<Object>, Dimensio
      * calling DimensionSelector.constant(null), so that it's impossible to mistakely use NullDimensionSelector in
      * instanceof statements. {@link #isNilSelector} method should be used instead.
      */
-    private static class NullDimensionSelector implements SingleValueHistoricalDimensionSelector, IdLookup
+    private static class NullDimensionSelector implements SingleValueHistoricalDimensionSelector, IdLookup<String>
     {
       private NullDimensionSelector()
       {

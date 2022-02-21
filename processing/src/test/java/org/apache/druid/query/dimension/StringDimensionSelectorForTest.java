@@ -84,7 +84,7 @@ public class StringDimensionSelectorForTest extends AbstractDimensionSelector
 
   @Nullable
   @Override
-  public IdLookup idLookup()
+  public IdLookup<String> idLookup()
   {
     return validIdLookup ? dictionary::getInt : null;
   }

@@ -37,7 +37,7 @@ import org.apache.druid.segment.filter.BooleanValueMatcher;
 import javax.annotation.Nullable;
 import java.util.BitSet;
 
-final class ForwardingFilteredDimensionSelector extends AbstractDimensionSelector implements IdLookup
+final class ForwardingFilteredDimensionSelector extends AbstractDimensionSelector implements IdLookup<String>
 {
   private final DimensionSelector selector;
   private final IdLookup baseIdLookup;

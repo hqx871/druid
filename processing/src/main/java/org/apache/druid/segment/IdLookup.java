@@ -24,10 +24,10 @@ import javax.annotation.Nullable;
 /**
  * "Mixin" for {@link DimensionSelector}.
  */
-public interface IdLookup
+public interface IdLookup<ValType>
 {
   /**
    * Inverse of {@link DimensionSelector#lookupName(int)}.
    */
-  int lookupId(@Nullable String name);
+  int lookupId(@Nullable ValType name);
 }

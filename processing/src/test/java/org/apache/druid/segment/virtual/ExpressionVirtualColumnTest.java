@@ -340,7 +340,7 @@ public class ExpressionVirtualColumnTest extends InitializedNullHandlingTest
 
           @Nullable
           @Override
-          public IdLookup idLookup()
+          public IdLookup<String> idLookup()
           {
             return name -> 0;
           }

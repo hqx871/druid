@@ -26,7 +26,7 @@ import org.apache.druid.segment.QueryableIndexStorageAdapter;
 import javax.annotation.Nullable;
 
 public class NilVectorSelector
-    implements VectorValueSelector, VectorObjectSelector, SingleValueDimensionVectorSelector, IdLookup
+    implements VectorValueSelector, VectorObjectSelector, SingleValueDimensionVectorSelector, IdLookup<String>
 {
   private static final boolean[] DEFAULT_NULLS_VECTOR = new boolean[QueryableIndexStorageAdapter.DEFAULT_VECTOR_SIZE];
   private static final int[] DEFAULT_INT_VECTOR = new int[QueryableIndexStorageAdapter.DEFAULT_VECTOR_SIZE];

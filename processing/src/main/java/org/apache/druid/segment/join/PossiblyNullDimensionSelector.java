@@ -33,7 +33,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.function.BooleanSupplier;
 
-public class PossiblyNullDimensionSelector extends AbstractDimensionSelector implements IdLookup
+public class PossiblyNullDimensionSelector extends AbstractDimensionSelector implements IdLookup<String>
 {
   private final DimensionSelector baseSelector;
   private final BooleanSupplier beNull;

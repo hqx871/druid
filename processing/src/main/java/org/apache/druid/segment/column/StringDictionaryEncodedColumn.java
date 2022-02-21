@@ -144,7 +144,7 @@ public class StringDictionaryEncodedColumn implements DictionaryEncodedColumn<St
   )
   {
     abstract class QueryableDimensionSelector extends AbstractDimensionSelector
-        implements HistoricalDimensionSelector, IdLookup
+        implements HistoricalDimensionSelector, IdLookup<String>
     {
       @Override
       public int getValueCardinality()
@@ -373,7 +373,7 @@ public class StringDictionaryEncodedColumn implements DictionaryEncodedColumn<St
   @Override
   public SingleValueDimensionVectorSelector makeSingleValueDimensionVectorSelector(final ReadableVectorOffset offset)
   {
-    class QueryableSingleValueDimensionVectorSelector implements SingleValueDimensionVectorSelector, IdLookup
+    class QueryableSingleValueDimensionVectorSelector implements SingleValueDimensionVectorSelector, IdLookup<String>
     {
       private final int[] vector = new int[offset.getMaxVectorSize()];
       private int id = ReadableVectorInspector.NULL_ID;
@@ -459,7 +459,7 @@ public class StringDictionaryEncodedColumn implements DictionaryEncodedColumn<St
   @Override
   public MultiValueDimensionVectorSelector makeMultiValueDimensionVectorSelector(final ReadableVectorOffset offset)
   {
-    class QueryableMultiValueDimensionVectorSelector implements MultiValueDimensionVectorSelector, IdLookup
+    class QueryableMultiValueDimensionVectorSelector implements MultiValueDimensionVectorSelector, IdLookup<String>
     {
       private final IndexedInts[] vector = new IndexedInts[offset.getMaxVectorSize()];
       private int id = ReadableVectorInspector.NULL_ID;

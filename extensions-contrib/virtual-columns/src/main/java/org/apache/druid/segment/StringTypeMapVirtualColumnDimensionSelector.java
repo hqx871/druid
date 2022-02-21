@@ -133,10 +133,10 @@ final class StringTypeMapVirtualColumnDimensionSelector extends MapVirtualColumn
 
   @Nullable
   @Override
-  public IdLookup idLookup()
+  public IdLookup<String> idLookup()
   {
     final DimensionSelector valueSelector = getValueSelector();
-    final IdLookup valueLookup = valueSelector.idLookup();
+    final IdLookup<String> valueLookup = valueSelector.idLookup();
 
     if (valueLookup != null) {
       final int valueIndex = findValueIndicesIndexForSubColumn();

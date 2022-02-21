@@ -279,7 +279,7 @@ public class StringDimensionIndexer extends DictionaryEncodedColumnIndexer<int[]
     // (for example: nulls getting generated for empty arrays, or calls to lookupId).
     final int maxId = getCardinality();
 
-    class IndexerDimensionSelector implements DimensionSelector, IdLookup
+    class IndexerDimensionSelector implements DimensionSelector, IdLookup<String>
     {
       private final ArrayBasedIndexedInts indexedInts = new ArrayBasedIndexedInts();
 

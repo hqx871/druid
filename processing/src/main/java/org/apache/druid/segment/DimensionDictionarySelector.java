@@ -147,5 +147,5 @@ public interface DimensionDictionarySelector
    * Returns {@link IdLookup} if available for this DimensionSelector, or null.
    */
   @Nullable
-  IdLookup idLookup();
+  IdLookup<String> idLookup();
 }

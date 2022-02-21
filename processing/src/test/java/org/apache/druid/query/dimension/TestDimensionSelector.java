@@ -84,7 +84,7 @@ class TestDimensionSelector extends AbstractDimensionSelector
   @Override
   public IdLookup idLookup()
   {
-    return new IdLookup()
+    return new IdLookup<String>()
     {
       @Override
       public int lookupId(String name)

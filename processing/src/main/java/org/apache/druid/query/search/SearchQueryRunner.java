@@ -127,7 +127,7 @@ public class SearchQueryRunner implements QueryRunner<Result<SearchResultValue>>
       if (!DimensionSelector.isNilSelector(selector)) {
         final IndexedInts row = selector.getRow();
         for (int i = 0, rowSize = row.size(); i < rowSize; ++i) {
-          final String dimVal = selector.lookupName(row.get(i));
+          final String dimVal = (String) selector.lookupName(row.get(i));
           if (searchQuerySpec.accept(dimVal)) {
             set.addTo(new SearchHit(outputName, dimVal), 1);
             if (set.size() >= limit) {

@@ -717,10 +717,10 @@ public class RowBasedGrouperHelper
   }
 
   private static class StringInputRawSupplierColumnSelectorStrategy
-      implements InputRawSupplierColumnSelectorStrategy<DimensionSelector>
+      implements InputRawSupplierColumnSelectorStrategy<DimensionSelector<String>>
   {
     @Override
-    public Supplier<Comparable> makeInputRawSupplier(DimensionSelector selector)
+    public Supplier<Comparable> makeInputRawSupplier(DimensionSelector<String> selector)
     {
       return () -> {
         IndexedInts index = selector.getRow();

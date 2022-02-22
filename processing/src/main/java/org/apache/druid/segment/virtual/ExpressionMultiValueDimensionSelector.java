@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
  * Basic multi-value dimension selector for an {@link org.apache.druid.math.expr.Expr} evaluating
  * {@link ColumnValueSelector}.
  */
-public class ExpressionMultiValueDimensionSelector implements DimensionSelector
+public class ExpressionMultiValueDimensionSelector implements DimensionSelector<String>
 {
   public static ExpressionMultiValueDimensionSelector fromValueSelector(
       ColumnValueSelector<ExprEval> baseSelector,

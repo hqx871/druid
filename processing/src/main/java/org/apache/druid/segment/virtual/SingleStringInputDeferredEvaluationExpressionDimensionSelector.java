@@ -45,9 +45,9 @@ import javax.annotation.Nullable;
  * @see SingleStringInputDeferredEvaluationExpressionDimensionVectorSelector for the vectorized version of
  * this selector.
  */
-public class SingleStringInputDeferredEvaluationExpressionDimensionSelector implements DimensionSelector
+public class SingleStringInputDeferredEvaluationExpressionDimensionSelector implements DimensionSelector<String>
 {
-  private final DimensionSelector selector;
+  private final DimensionSelector<String> selector;
   private final Expr expression;
   private final SingleInputBindings bindings = new SingleInputBindings(ExpressionType.STRING);
 

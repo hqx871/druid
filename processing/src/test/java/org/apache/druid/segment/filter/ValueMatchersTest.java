@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableList;
 import org.apache.druid.java.util.common.StringUtils;
 import org.apache.druid.segment.DimensionSelector;
 import org.apache.druid.segment.SimpleAscendingOffset;
+import org.apache.druid.segment.column.ValueType;
 import org.apache.druid.segment.data.GenericIndexed;
 import org.apache.druid.segment.data.VSizeColumnarInts;
 import org.apache.druid.segment.data.VSizeColumnarMultiInts;
@@ -45,7 +46,8 @@ public class ValueMatchersTest extends InitializedNullHandlingTest
   @Before
   public void setup()
   {
-    supplierSingleConstant = new DictionaryEncodedColumnSupplier(
+    supplierSingleConstant = new DictionaryEncodedColumnSupplier<>(
+        ValueType.STRING,
         GenericIndexed.fromIterable(ImmutableList.of("value"), GenericIndexed.STRING_STRATEGY),
         GenericIndexed.fromIterable(
             ImmutableList.of(ByteBuffer.wrap(StringUtils.toUtf8("value"))),
@@ -55,7 +57,8 @@ public class ValueMatchersTest extends InitializedNullHandlingTest
         null,
         0
     );
-    supplierSingle = new DictionaryEncodedColumnSupplier(
+    supplierSingle = new DictionaryEncodedColumnSupplier<>(
+        ValueType.STRING,
         GenericIndexed.fromIterable(ImmutableList.of("value", "value2"), GenericIndexed.STRING_STRATEGY),
         GenericIndexed.fromIterable(
             ImmutableList.of(
@@ -69,6 +72,7 @@ public class ValueMatchersTest extends InitializedNullHandlingTest
         0
     );
     supplierMulti = new DictionaryEncodedColumnSupplier(
+        ValueType.STRING,
         GenericIndexed.fromIterable(ImmutableList.of("value"), GenericIndexed.STRING_STRATEGY),
         GenericIndexed.fromIterable(
             ImmutableList.of(ByteBuffer.wrap(StringUtils.toUtf8("value"))),

@@ -205,7 +205,8 @@ public class ColumnComparisonFilter implements Filter
         } else {
           String[] values = new String[size];
           for (int i = 0; i < size; ++i) {
-            values[i] = selector.lookupName(row.get(i));
+            Object comparable = selector.lookupName(row.get(i));
+            values[i] = comparable == null ? null : String.valueOf(comparable);
           }
           return values;
         }

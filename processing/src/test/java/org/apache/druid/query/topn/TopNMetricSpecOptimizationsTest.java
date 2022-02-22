@@ -340,7 +340,7 @@ public class TopNMetricSpecOptimizationsTest
   private DimensionSelector makeFakeDimSelector(int cardinality)
   {
 
-    DimensionSelector dimSelector = new DimensionSelector()
+    DimensionSelector dimSelector = new DimensionSelector<String>()
     {
       @Override
       public int getValueCardinality()

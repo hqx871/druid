@@ -34,7 +34,7 @@ import org.apache.druid.segment.data.SingleIndexedInt;
 import javax.annotation.Nullable;
 import java.util.function.IntSupplier;
 
-public class IndexedTableDimensionSelector implements DimensionSelector
+public class IndexedTableDimensionSelector implements DimensionSelector<String>
 {
   private final IndexedTable table;
   private final IntSupplier currentRow;

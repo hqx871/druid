@@ -38,7 +38,7 @@ import java.util.Set;
 /**
  *
  */
-public class ListFilteredDimensionSpec extends BaseFilteredDimensionSpec
+public class ListFilteredDimensionSpec extends BaseFilteredDimensionSpec<String>
 {
 
   private static final byte CACHE_TYPE_ID = 0x3;
@@ -126,7 +126,7 @@ public class ListFilteredDimensionSpec extends BaseFilteredDimensionSpec
     return builder.build();
   }
 
-  public static DimensionSelector filterAllowList(Set<String> values, DimensionSelector selector)
+  public static DimensionSelector filterAllowList(Set<String> values, DimensionSelector<String> selector)
   {
     if (selector.getValueCardinality() < 0 || !selector.nameLookupPossibleInAdvance()) {
       return new PredicateFilteredDimensionSelector(selector, Predicates.in(values));
@@ -140,10 +140,10 @@ public class ListFilteredDimensionSpec extends BaseFilteredDimensionSpec
     return new ForwardingFilteredDimensionSelector(selector, idMapping);
   }
 
-  public static DimensionSelector filterDenyList(Set<String> values, DimensionSelector selector)
+  public static DimensionSelector filterDenyList(Set<String> values, DimensionSelector<String> selector)
   {
     if (selector.getValueCardinality() < 0 || !selector.nameLookupPossibleInAdvance()) {
-      return new PredicateFilteredDimensionSelector(
+      return new PredicateFilteredDimensionSelector<>(
           selector,
           input -> !values.contains(input)
       );

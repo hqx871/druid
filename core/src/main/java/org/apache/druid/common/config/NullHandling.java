@@ -22,8 +22,10 @@ package org.apache.druid.common.config;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
+import org.apache.druid.segment.column.ValueType;
 
 import javax.annotation.Nullable;
+import java.util.Objects;
 
 /**
  * Helper class for NullHandling. This class is used to switch between SQL compatible Null Handling behavior
@@ -87,10 +89,30 @@ public class NullHandling
   }
 
   @Nullable
+  public static <T> T nullToZeroOrEquivalentIfNeeded(@Nullable T value, Class<T> valType)
+  {
+    //CHECKSTYLE.OFF: Regexp
+    return replaceWithDefault() && null == value ? defaultValueForClass(valType) : value;
+    //CHECKSTYLE.ON: Regexp
+  }
+
+  @Nullable
   public static String emptyToNullIfNeeded(@Nullable String value)
   {
     //CHECKSTYLE.OFF: Regexp
     return replaceWithDefault() ? Strings.emptyToNull(value) : value;
+    //CHECKSTYLE.ON: Regexp
+  }
+
+  @Nullable
+  public static <T> T zeroOrEquivalentToNullIfNeeded(@Nullable T value, Class<T> valType)
+  {
+    //CHECKSTYLE.OFF: Regexp
+    if (replaceWithDefault()) {
+      T defaultVal = defaultValueForClass(valType);
+      return Objects.equals(defaultVal, value) ? null : value;
+    }
+    return value;
     //CHECKSTYLE.ON: Regexp
   }
 
@@ -141,8 +163,29 @@ public class NullHandling
     }
   }
 
+  public static <T> T defaultValueForType(final ValueType type)
+  {
+    switch (type) {
+      case FLOAT:
+        return (T) defaultFloatValue();
+      case DOUBLE:
+        return (T) defaultDoubleValue();
+      case LONG:
+        return (T) defaultLongValue();
+      case STRING:
+        return (T) defaultStringValue();
+      default:
+        return null;
+    }
+  }
+
   public static boolean isNullOrEquivalent(@Nullable String value)
   {
     return replaceWithDefault() ? Strings.isNullOrEmpty(value) : value == null;
+  }
+
+  public static boolean isNullOrEquivalent(@Nullable Object value)
+  {
+    return value == null || (replaceWithDefault() && value.equals(defaultValueForClass(value.getClass())));
   }
 }

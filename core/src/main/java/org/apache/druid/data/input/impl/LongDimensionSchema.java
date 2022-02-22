@@ -22,6 +22,7 @@ package org.apache.druid.data.input.impl;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.druid.segment.column.ColumnType;
 
 
@@ -29,10 +30,17 @@ public class LongDimensionSchema extends DimensionSchema
 {
   @JsonCreator
   public LongDimensionSchema(
-      @JsonProperty("name") String name
+      @JsonProperty("name") String name,
+      @JsonProperty("createBitmapIndex") boolean createBitmapIndex
   )
   {
-    super(name, null, false);
+    super(name, null, createBitmapIndex);
+  }
+
+  @VisibleForTesting
+  public LongDimensionSchema(String name)
+  {
+    this(name, false);
   }
 
   @Override

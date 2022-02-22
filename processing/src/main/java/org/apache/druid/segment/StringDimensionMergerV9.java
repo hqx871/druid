@@ -42,6 +42,7 @@ import org.apache.druid.segment.data.Indexed;
 import org.apache.druid.segment.data.ListIndexed;
 import org.apache.druid.segment.data.ObjectStrategy;
 import org.apache.druid.segment.serde.DictionaryEncodedColumnPartSerde;
+import org.apache.druid.segment.serde.StringDictionaryEncodedColumnPartSerde;
 import org.apache.druid.segment.writeout.SegmentWriteOutMedium;
 
 import javax.annotation.Nullable;
@@ -115,7 +116,7 @@ public class StringDimensionMergerV9 extends DictionaryEncodedColumnMerger<Strin
     final ColumnDescriptor.Builder builder = ColumnDescriptor.builder();
     builder.setValueType(ValueType.STRING);
     builder.setHasMultipleValues(hasMultiValue);
-    final DictionaryEncodedColumnPartSerde.SerializerBuilder partBuilder = DictionaryEncodedColumnPartSerde
+    final DictionaryEncodedColumnPartSerde.SerializerBuilder partBuilder = StringDictionaryEncodedColumnPartSerde
         .serializerBuilder()
         .withDictionary(dictionaryWriter)
         .withValue(

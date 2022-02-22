@@ -28,7 +28,8 @@ import org.apache.druid.segment.DimensionDictionarySelector;
  * @see org.apache.druid.segment.DimensionSelector, the non-vectorized version.
  * @see MultiValueDimensionVectorSelector, the multi-valued version.
  */
-public interface SingleValueDimensionVectorSelector extends DimensionDictionarySelector, VectorSizeInspector
+public interface SingleValueDimensionVectorSelector<ValType>
+    extends DimensionDictionarySelector<ValType>, VectorSizeInspector
 {
   /**
    * Get the current vector. The array will be reused, so it is not a good idea to retain a reference to it.

@@ -40,9 +40,9 @@ import javax.annotation.Nullable;
  * @see SingleStringInputDeferredEvaluationExpressionDimensionSelector for the non-vectorized version of this selector.
  */
 public class SingleStringInputDeferredEvaluationExpressionDimensionVectorSelector
-    implements SingleValueDimensionVectorSelector
+    implements SingleValueDimensionVectorSelector<String>
 {
-  private final SingleValueDimensionVectorSelector selector;
+  private final SingleValueDimensionVectorSelector<String> selector;
   private final ExprVectorProcessor<String[]> stringProcessor;
   private final StringLookupVectorInputBindings inputBinding;
 

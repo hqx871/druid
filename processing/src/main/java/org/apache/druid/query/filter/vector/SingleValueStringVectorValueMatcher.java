@@ -32,7 +32,7 @@ import java.util.Objects;
 
 public class SingleValueStringVectorValueMatcher implements VectorValueMatcherFactory
 {
-  private final SingleValueDimensionVectorSelector selector;
+  private final SingleValueDimensionVectorSelector<String> selector;
 
   public SingleValueStringVectorValueMatcher(final SingleValueDimensionVectorSelector selector)
   {
@@ -144,7 +144,8 @@ public class SingleValueStringVectorValueMatcher implements VectorValueMatcherFa
             if (checkedIds.get(id)) {
               matches = matchingIds.get(id);
             } else {
-              matches = predicate.apply(selector.lookupName(id));
+              Comparable val = selector.lookupName(id);
+              matches = predicate.apply(val == null ? null : String.valueOf(val));
               checkedIds.set(id);
               if (matches) {
                 matchingIds.set(id);
@@ -177,7 +178,8 @@ public class SingleValueStringVectorValueMatcher implements VectorValueMatcherFa
 
           for (int i = 0; i < mask.getSelectionSize(); i++) {
             final int rowNum = mask.getSelection()[i];
-            if (predicate.apply(selector.lookupName(vector[rowNum]))) {
+            Comparable val = selector.lookupName(vector[rowNum]);
+            if (predicate.apply(val == null ? null : String.valueOf(val))) {
               selection[numRows++] = rowNum;
             }
           }

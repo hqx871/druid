@@ -441,7 +441,7 @@ public class VirtualColumnsTest extends InitializedNullHandlingTest
     {
       final BaseLongColumnValueSelector selector = makeColumnValueSelector(dimensionSpec.getDimension(), factory);
       final ExtractionFn extractionFn = dimensionSpec.getExtractionFn();
-      final DimensionSelector dimensionSelector = new DimensionSelector()
+      final DimensionSelector dimensionSelector = new DimensionSelector<String>()
       {
         @Override
         public IndexedInts getRow()

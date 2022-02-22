@@ -750,7 +750,7 @@ public class PooledTopNAlgorithm
 
     final ByteBuffer resultsBuf = params.getResultsBuf();
     final int[] aggregatorSizes = params.getAggregatorSizes();
-    final DimensionSelector dimSelector = params.getDimSelector();
+    final DimensionSelector<String> dimSelector = params.getDimSelector();
 
     for (int i = 0; i < positions.length; i++) {
       int position = positions[i];

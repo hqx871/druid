@@ -19,6 +19,8 @@
 
 package org.apache.druid.segment.column;
 
+import org.apache.druid.common.config.NullHandling;
+import org.apache.druid.segment.DimensionHandlerUtils;
 import org.apache.druid.segment.data.CachingIndexed;
 import org.apache.druid.segment.data.ColumnarInts;
 import org.apache.druid.segment.data.ColumnarMultiInts;
@@ -30,12 +32,12 @@ import java.nio.ByteBuffer;
 /**
  *
  */
-public class StringDictionaryEncodedColumn extends BaseDictionaryEncodedColumn<String>
+public class LongDictionaryEncodedColumn extends BaseDictionaryEncodedColumn<Long>
 {
-  public StringDictionaryEncodedColumn(
+  public LongDictionaryEncodedColumn(
       @Nullable ColumnarInts singleValueColumn,
       @Nullable ColumnarMultiInts multiValueColumn,
-      CachingIndexed<String> dictionary,
+      CachingIndexed<Long> dictionary,
       Indexed<ByteBuffer> dictionaryUtf8
   )
   {
@@ -43,14 +45,22 @@ public class StringDictionaryEncodedColumn extends BaseDictionaryEncodedColumn<S
   }
 
   @Override
-  protected Class<String> getValueClass()
+  protected Class<Long> getValueClass()
   {
-    return String.class;
+    return Long.class;
   }
 
   @Override
-  protected String convertToStringName(@Nullable String name)
+  protected String convertToStringName(@Nullable Long name)
   {
-    return name;
+    return name == null ? null : String.valueOf(name);
+  }
+
+  @Nullable
+  @Override
+  public Long lookupName(int id)
+  {
+    Long longVal = super.lookupName(id);
+    return null == longVal && NullHandling.replaceWithDefault() ? 0L : longVal;
   }
 }

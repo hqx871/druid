@@ -29,7 +29,7 @@ import java.nio.ByteBuffer;
 
 public class SingleValueStringCardinalityVectorProcessor implements CardinalityVectorProcessor
 {
-  private final SingleValueDimensionVectorSelector selector;
+  private final SingleValueDimensionVectorSelector<String> selector;
 
   public SingleValueStringCardinalityVectorProcessor(final SingleValueDimensionVectorSelector selector)
   {

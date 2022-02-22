@@ -29,7 +29,7 @@ import java.nio.ByteBuffer;
  * {@link org.apache.druid.segment.vector.SingleValueDimensionVectorSelector}, and
  * {@link org.apache.druid.segment.vector.MultiValueDimensionVectorSelector}.
  */
-public interface DimensionDictionarySelector<ValType extends Comparable<ValType>>
+public interface DimensionDictionarySelector<ValType>
 {
   int CARDINALITY_UNKNOWN = -1;
 
@@ -89,7 +89,7 @@ public interface DimensionDictionarySelector<ValType extends Comparable<ValType>
    */
   @CalledFromHotLoop
   @Nullable
-  String lookupName(int id);
+  ValType lookupName(int id);
 
   /**
    * Returns the value for a particular dictionary id as UTF-8 bytes.

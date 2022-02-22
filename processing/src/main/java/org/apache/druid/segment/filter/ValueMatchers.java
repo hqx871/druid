@@ -301,7 +301,7 @@ public class ValueMatchers
    */
   @Nullable
   public static Boolean toBooleanIfPossible(
-      final DimensionDictionarySelector selector,
+      final DimensionDictionarySelector<Comparable> selector,
       final boolean hasMultipleValues,
       final Predicate<String> predicate
   )
@@ -312,7 +312,8 @@ public class ValueMatchers
       return predicate.apply(null);
     } else if (!hasMultipleValues && selector.getValueCardinality() == 1 && selector.nameLookupPossibleInAdvance()) {
       // Every row has the same value. Match if and only if "predicate" matches the possible value.
-      return predicate.apply(selector.lookupName(0));
+      Comparable value = selector.lookupName(0);
+      return predicate.apply(value == null ? null : String.valueOf(value));
     } else {
       return null;
     }

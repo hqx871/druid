@@ -33,10 +33,11 @@ import java.util.Objects;
 /**
  * Settable implementation of {@link DimensionSelector}.
  */
-public class SettableDimensionValueSelector implements DimensionSelector, SettableColumnValueSelector<Object>
+public class SettableDimensionValueSelector<ValType extends Comparable<ValType>>
+    implements DimensionSelector<ValType>, SettableColumnValueSelector<Object>
 {
   @Nullable
-  private DimensionSelector keptSelector;
+  private DimensionSelector<ValType> keptSelector;
   private final ArrayBasedIndexedInts keptRow = new ArrayBasedIndexedInts();
 
   @Override
@@ -79,7 +80,7 @@ public class SettableDimensionValueSelector implements DimensionSelector, Settab
 
   @Nullable
   @Override
-  public String lookupName(int id)
+  public ValType lookupName(int id)
   {
     return Objects.requireNonNull(keptSelector).lookupName(id);
   }
@@ -92,7 +93,7 @@ public class SettableDimensionValueSelector implements DimensionSelector, Settab
 
   @Nullable
   @Override
-  public IdLookup idLookup()
+  public IdLookup<ValType> idLookup()
   {
     return Objects.requireNonNull(keptSelector).idLookup();
   }

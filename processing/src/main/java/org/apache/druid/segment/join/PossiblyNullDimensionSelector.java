@@ -33,9 +33,10 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.function.BooleanSupplier;
 
-public class PossiblyNullDimensionSelector extends AbstractDimensionSelector implements IdLookup<String>
+public class PossiblyNullDimensionSelector<ValType extends Comparable<ValType>>
+    extends AbstractDimensionSelector<ValType> implements IdLookup<String>
 {
-  private final DimensionSelector baseSelector;
+  private final DimensionSelector<ValType> baseSelector;
   private final BooleanSupplier beNull;
   private final NullAdjustedIndexedInts nullAdjustedRow;
 
@@ -93,7 +94,7 @@ public class PossiblyNullDimensionSelector extends AbstractDimensionSelector imp
 
   @Nullable
   @Override
-  public String lookupName(int id)
+  public ValType lookupName(int id)
   {
     final int cardinality = getValueCardinality();
 

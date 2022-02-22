@@ -278,7 +278,7 @@ public class ExpressionVirtualColumnTest extends InitializedNullHandlingTest
       public DimensionSelector makeDimensionSelector(DimensionSpec dimensionSpec)
       {
         DimensionSelector delegate = COLUMN_SELECTOR_FACTORY.makeDimensionSelector(dimensionSpec);
-        DimensionSelector faker = new DimensionSelector()
+        DimensionSelector faker = new DimensionSelector<String>()
         {
           @Override
           public IndexedInts getRow()

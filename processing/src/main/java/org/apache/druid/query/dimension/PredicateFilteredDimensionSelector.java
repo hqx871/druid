@@ -31,9 +31,10 @@ import org.apache.druid.segment.data.IndexedInts;
 import javax.annotation.Nullable;
 import java.util.Objects;
 
-final class PredicateFilteredDimensionSelector extends AbstractDimensionSelector
+final class PredicateFilteredDimensionSelector<ValType extends Comparable<ValType>>
+    extends AbstractDimensionSelector<ValType>
 {
-  private final DimensionSelector selector;
+  private final DimensionSelector<ValType> selector;
   private final Predicate<String> predicate;
   private final ArrayBasedIndexedInts row = new ArrayBasedIndexedInts();
 
@@ -52,7 +53,8 @@ final class PredicateFilteredDimensionSelector extends AbstractDimensionSelector
     int resultSize = 0;
     for (int i = 0; i < baseRowSize; i++) {
       int id = baseRow.get(i);
-      if (predicate.apply(selector.lookupName(id))) {
+      ValType val = selector.lookupName(id);
+      if (predicate.apply(val == null ? null : String.valueOf(val))) {
         row.setValue(resultSize, id);
         resultSize++;
       }
@@ -73,7 +75,8 @@ final class PredicateFilteredDimensionSelector extends AbstractDimensionSelector
         final int baseRowSize = baseRow.size();
         boolean nullRow = true;
         for (int i = 0; i < baseRowSize; i++) {
-          String rowValue = lookupName(baseRow.get(i));
+          ValType val = lookupName(baseRow.get(i));
+          String rowValue = val == null ? null : String.valueOf(val);
           if (predicate.apply(rowValue)) {
             if (Objects.equals(rowValue, value)) {
               return true;
@@ -107,7 +110,8 @@ final class PredicateFilteredDimensionSelector extends AbstractDimensionSelector
         final int baseRowSize = baseRow.size();
         boolean nullRow = true;
         for (int i = 0; i < baseRowSize; ++i) {
-          String rowValue = lookupName(baseRow.get(i));
+          ValType val = lookupName(baseRow.get(i));
+          String rowValue = val == null ? null : String.valueOf(val);
           if (predicate.apply(rowValue)) {
             if (matcherPredicate.apply(rowValue)) {
               return true;
@@ -136,7 +140,7 @@ final class PredicateFilteredDimensionSelector extends AbstractDimensionSelector
   }
 
   @Override
-  public String lookupName(int id)
+  public ValType lookupName(int id)
   {
     return selector.lookupName(id);
   }

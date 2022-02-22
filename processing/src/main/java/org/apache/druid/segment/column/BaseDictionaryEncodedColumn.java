@@ -102,7 +102,7 @@ public abstract class BaseDictionaryEncodedColumn<ValType extends Comparable<Val
 
   @Override
   @Nullable
-  public final ValType lookupName(int id)
+  public ValType lookupName(int id)
   {
     return cachedDictionary.get(id);
   }
@@ -144,8 +144,8 @@ public abstract class BaseDictionaryEncodedColumn<ValType extends Comparable<Val
       @Nullable final ExtractionFn extractionFn
   )
   {
-    abstract class QueryableDimensionSelector extends AbstractDimensionSelector
-        implements HistoricalDimensionSelector, IdLookup<ValType>
+    abstract class QueryableDimensionSelector extends AbstractDimensionSelector<Comparable>
+        implements HistoricalDimensionSelector<Comparable>, IdLookup<Comparable>
     {
       @Override
       public int getValueCardinality()
@@ -162,10 +162,10 @@ public abstract class BaseDictionaryEncodedColumn<ValType extends Comparable<Val
       }
 
       @Override
-      public String lookupName(int id)
+      public Comparable lookupName(int id)
       {
         final ValType value = BaseDictionaryEncodedColumn.this.lookupName(id);
-        return extractionFn == null ? convertToStringName(value) : extractionFn.apply(value);
+        return extractionFn == null ? (value) : extractionFn.apply(value);
       }
 
       @Nullable
@@ -189,18 +189,18 @@ public abstract class BaseDictionaryEncodedColumn<ValType extends Comparable<Val
 
       @Nullable
       @Override
-      public IdLookup<ValType> idLookup()
+      public IdLookup<Comparable> idLookup()
       {
         return extractionFn == null ? this : null;
       }
 
       @Override
-      public int lookupId(ValType name)
+      public int lookupId(Comparable name)
       {
         if (extractionFn != null) {
           throw new UnsupportedOperationException("cannot perform lookup when applying an extraction function");
         }
-        return BaseDictionaryEncodedColumn.this.lookupId(name);
+        return BaseDictionaryEncodedColumn.this.lookupId((ValType) name);
       }
     }
 
@@ -255,7 +255,7 @@ public abstract class BaseDictionaryEncodedColumn<ValType extends Comparable<Val
       return new MultiValueDimensionSelector();
     } else {
       class SingleValueQueryableDimensionSelector extends QueryableDimensionSelector
-          implements SingleValueHistoricalDimensionSelector
+          implements SingleValueHistoricalDimensionSelector<Comparable>
       {
         private final SingleIndexedInt row = new SingleIndexedInt();
 
@@ -288,7 +288,7 @@ public abstract class BaseDictionaryEncodedColumn<ValType extends Comparable<Val
         public ValueMatcher makeValueMatcher(final @Nullable String value)
         {
           if (extractionFn == null) {
-            final int valueId = lookupId(convertFromStringName(value));
+            final int valueId = lookupId(value);
             if (valueId >= 0) {
               return new ValueMatcher()
               {
@@ -330,7 +330,8 @@ public abstract class BaseDictionaryEncodedColumn<ValType extends Comparable<Val
               if (checkedIds.get(id)) {
                 return matchingIds.get(id);
               } else {
-                final boolean matches = predicate.apply(lookupName(id));
+                Comparable val = lookupName(id);
+                final boolean matches = predicate.apply(val == null ? null : String.valueOf(val));
                 checkedIds.set(id);
                 if (matches) {
                   matchingIds.set(id);
@@ -374,7 +375,7 @@ public abstract class BaseDictionaryEncodedColumn<ValType extends Comparable<Val
   @Override
   public final SingleValueDimensionVectorSelector makeSingleValueDimensionVectorSelector(final ReadableVectorOffset offset)
   {
-    class QueryableSingleValueDimensionVectorSelector implements SingleValueDimensionVectorSelector, IdLookup<ValType>
+    class QueryableSingleValueDimensionVectorSelector implements SingleValueDimensionVectorSelector<ValType>, IdLookup<ValType>
     {
       private final int[] vector = new int[offset.getMaxVectorSize()];
       private int id = ReadableVectorInspector.NULL_ID;
@@ -404,9 +405,9 @@ public abstract class BaseDictionaryEncodedColumn<ValType extends Comparable<Val
 
       @Nullable
       @Override
-      public String lookupName(final int id)
+      public ValType lookupName(final int id)
       {
-        return convertToStringName(BaseDictionaryEncodedColumn.this.lookupName(id));
+        return BaseDictionaryEncodedColumn.this.lookupName(id);
       }
 
       @Nullable
@@ -612,9 +613,6 @@ public abstract class BaseDictionaryEncodedColumn<ValType extends Comparable<Val
   }
 
   protected abstract Class<ValType> getValueClass();
-
-  @Nullable
-  protected abstract ValType convertFromStringName(@Nullable String name);
 
   @Nullable
   protected abstract String convertToStringName(@Nullable ValType name);

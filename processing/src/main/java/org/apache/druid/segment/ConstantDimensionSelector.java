@@ -31,7 +31,7 @@ import org.apache.druid.segment.historical.SingleValueHistoricalDimensionSelecto
 import javax.annotation.Nullable;
 import java.util.Objects;
 
-public class ConstantDimensionSelector implements SingleValueHistoricalDimensionSelector, IdLookup<String>
+public class ConstantDimensionSelector implements SingleValueHistoricalDimensionSelector<String>, IdLookup<String>
 {
   private final String value;
 

@@ -205,18 +205,24 @@ public class SegmentAnalyzer
       cardinality = bitmapIndex.getCardinality();
 
       if (analyzingSize()) {
-        for (int i = 0; i < cardinality; ++i) {
-          String value = bitmapIndex.getValue(i);
-          if (value != null) {
-            size += StringUtils.estimatedBinaryLengthAsUTF8(value) *
-                    ((long) bitmapIndex.getBitmap(bitmapIndex.getIndex(value)).size());
+        if (capabilities.getType() == ValueType.STRING) {
+          for (int i = 0; i < cardinality; ++i) {
+            String value = (String) bitmapIndex.getValue(i);
+            if (value != null) {
+              size += StringUtils.estimatedBinaryLengthAsUTF8(value) *
+                      ((long) bitmapIndex.getBitmap(bitmapIndex.getIndex(value)).size());
+            }
           }
         }
       }
 
       if (analyzingMinMax() && cardinality > 0) {
-        min = NullHandling.nullToEmptyIfNeeded(bitmapIndex.getValue(0));
-        max = NullHandling.nullToEmptyIfNeeded(bitmapIndex.getValue(cardinality - 1));
+        min = bitmapIndex.getValue(0);
+        max = bitmapIndex.getValue(cardinality - 1);
+        if (capabilities.getType() == ValueType.STRING) {
+          min = NullHandling.nullToEmptyIfNeeded((String) min);
+          max = NullHandling.nullToEmptyIfNeeded((String) max);
+        }
       }
     } else if (capabilities.isDictionaryEncoded().isTrue()) {
       // fallback if no bitmap index
@@ -285,7 +291,7 @@ public class SegmentAnalyzer
             @Override
             public Long accumulate(Long accumulated, Cursor cursor)
             {
-              DimensionSelector selector = cursor
+              DimensionSelector<Comparable> selector = cursor
                   .getColumnSelectorFactory()
                   .makeDimensionSelector(new DefaultDimensionSpec(columnName, columnName));
               if (selector == null) {
@@ -295,9 +301,13 @@ public class SegmentAnalyzer
               while (!cursor.isDone()) {
                 final IndexedInts row = selector.getRow();
                 for (int i = 0, rowSize = row.size(); i < rowSize; ++i) {
-                  final String dimVal = selector.lookupName(row.get(i));
-                  if (dimVal != null && !dimVal.isEmpty()) {
-                    current += StringUtils.estimatedBinaryLengthAsUTF8(dimVal);
+                  final Comparable dimVal = selector.lookupName(row.get(i));
+                  if (dimVal != null) {
+                    if (dimVal instanceof String) {
+                      current += StringUtils.estimatedBinaryLengthAsUTF8((String) dimVal);
+                    } else if (dimVal instanceof Long) {
+                      current += Long.BYTES;
+                    }
                   }
                 }
                 cursor.advance();

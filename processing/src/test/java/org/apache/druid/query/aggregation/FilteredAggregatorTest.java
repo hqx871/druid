@@ -96,7 +96,7 @@ public class FilteredAggregatorTest
 
         if ("dim".equals(dimensionName)) {
           return dimensionSpec.decorate(
-              new AbstractDimensionSelector()
+              new AbstractDimensionSelector<String>()
               {
                 @Override
                 public IndexedInts getRow()

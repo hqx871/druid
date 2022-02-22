@@ -237,7 +237,7 @@ public abstract class DictionaryEncodedColumnMerger<T extends Comparable<T>> imp
         inspector.visit("converter", converter);
       }
     };
-    return new DimensionSelector()
+    return new DimensionSelector<T>()
     {
       @Override
       public IndexedInts getRow()
@@ -271,7 +271,7 @@ public abstract class DictionaryEncodedColumnMerger<T extends Comparable<T>> imp
 
       @Nullable
       @Override
-      public String lookupName(int id)
+      public T lookupName(int id)
       {
         throw new UnsupportedOperationException();
       }

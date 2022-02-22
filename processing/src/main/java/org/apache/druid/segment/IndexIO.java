@@ -60,6 +60,7 @@ import org.apache.druid.segment.data.CompressedColumnarLongsSupplier;
 import org.apache.druid.segment.data.GenericIndexed;
 import org.apache.druid.segment.data.ImmutableRTreeObjectStrategy;
 import org.apache.druid.segment.data.IndexedIterable;
+import org.apache.druid.segment.data.ObjectStrategy;
 import org.apache.druid.segment.data.VSizeColumnarMultiInts;
 import org.apache.druid.segment.serde.ComplexColumnPartSupplier;
 import org.apache.druid.segment.serde.DictionaryEncodedColumnSupplier;
@@ -444,7 +445,8 @@ public class IndexIO
             .setType(ValueType.STRING)
             .setHasMultipleValues(true)
             .setDictionaryEncodedColumnSupplier(
-                new DictionaryEncodedColumnSupplier(
+                new DictionaryEncodedColumnSupplier<>(
+                    ValueType.STRING,
                     index.getDimValueLookup(dimension),
                     index.getDimValueUtf8Lookup(dimension),
                     null,

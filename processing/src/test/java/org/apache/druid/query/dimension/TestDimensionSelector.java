@@ -35,7 +35,7 @@ import javax.annotation.Nullable;
  * encoding 0 -> a, 1 -> b, ...
  * row -> [c,e,g]
  */
-class TestDimensionSelector extends AbstractDimensionSelector
+class TestDimensionSelector extends AbstractDimensionSelector<String>
 {
   public static final TestDimensionSelector INSTANCE = new TestDimensionSelector();
 

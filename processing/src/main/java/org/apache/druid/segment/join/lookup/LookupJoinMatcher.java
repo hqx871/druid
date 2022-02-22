@@ -71,7 +71,8 @@ public class LookupJoinMatcher implements JoinMatcher
             final IndexedInts row = selector.getRow();
 
             if (row.size() == 1) {
-              return selector.lookupName(row.get(0));
+              Object val = selector.lookupName(row.get(0));
+              return val == null ? null : String.valueOf(val);
             } else if (row.size() == 0) {
               return null;
             } else {

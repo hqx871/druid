@@ -39,9 +39,9 @@ public class StringAnyVectorAggregator implements VectorAggregator
   static final int FOUND_VALUE_OFFSET = Integer.BYTES;
 
   @Nullable
-  private final SingleValueDimensionVectorSelector singleValueSelector;
+  private final SingleValueDimensionVectorSelector<String> singleValueSelector;
   @Nullable
-  private final MultiValueDimensionVectorSelector multiValueSelector;
+  private final MultiValueDimensionVectorSelector<String> multiValueSelector;
   private final int maxStringBytes;
 
   public StringAnyVectorAggregator(

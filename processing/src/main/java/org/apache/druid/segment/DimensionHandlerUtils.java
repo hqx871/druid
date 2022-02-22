@@ -117,6 +117,13 @@ public final class DimensionHandlerUtils
     }
 
     if (capabilities.is(ValueType.LONG)) {
+      if (capabilities.hasBitmapIndexes()){
+        return new LongDictionaryEncodedDimensionHandler(
+            dimensionName,
+            multiValueHandling,
+            true
+        );
+      }
       return new LongDimensionHandler(dimensionName);
     }
 

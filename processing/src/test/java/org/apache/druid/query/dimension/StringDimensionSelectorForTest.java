@@ -35,7 +35,7 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.function.Supplier;
 
-public class StringDimensionSelectorForTest extends AbstractDimensionSelector
+public class StringDimensionSelectorForTest extends AbstractDimensionSelector<String>
 {
   private final Supplier<List<String>> rowSupplier;
   private final boolean unknownCardinality;

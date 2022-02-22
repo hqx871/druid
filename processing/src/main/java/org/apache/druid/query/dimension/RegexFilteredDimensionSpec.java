@@ -33,7 +33,7 @@ import java.util.regex.Pattern;
 /**
  *
  */
-public class RegexFilteredDimensionSpec extends BaseFilteredDimensionSpec
+public class RegexFilteredDimensionSpec extends BaseFilteredDimensionSpec<String>
 {
 
   private static final byte CACHE_TYPE_ID = 0x2;
@@ -59,7 +59,7 @@ public class RegexFilteredDimensionSpec extends BaseFilteredDimensionSpec
   }
 
   @Override
-  public DimensionSelector decorate(final DimensionSelector selector)
+  public DimensionSelector decorate(final DimensionSelector<String> selector)
   {
     if (selector == null) {
       return null;
@@ -67,7 +67,7 @@ public class RegexFilteredDimensionSpec extends BaseFilteredDimensionSpec
 
     final int selectorCardinality = selector.getValueCardinality();
     if (selectorCardinality < 0 || !selector.nameLookupPossibleInAdvance()) {
-      return new PredicateFilteredDimensionSelector(
+      return new PredicateFilteredDimensionSelector<>(
           selector,
           input -> {
             String val = NullHandling.nullToEmptyIfNeeded(input);

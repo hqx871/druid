@@ -33,7 +33,7 @@ import org.apache.druid.segment.filter.BooleanValueMatcher;
 import org.apache.druid.segment.historical.SingleValueHistoricalDimensionSelector;
 
 import javax.annotation.Nullable;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -45,7 +45,8 @@ import java.util.stream.Collectors;
  * @see org.apache.druid.segment.vector.MultiValueDimensionVectorSelector, another vectorized version
  */
 @PublicApi
-public interface DimensionSelector extends ColumnValueSelector<Object>, DimensionDictionarySelector, HotLoopCallee
+public interface DimensionSelector<ValType>
+    extends ColumnValueSelector<Object>, DimensionDictionarySelector<ValType>, HotLoopCallee
 {
   /**
    * Returns the indexed values at the current position in this DimensionSelector.
@@ -140,11 +141,11 @@ public interface DimensionSelector extends ColumnValueSelector<Object>, Dimensio
     } else if (rowSize == 1) {
       return selector.lookupName(row.get(0));
     } else {
-      final String[] strings = new String[rowSize];
+      final List list = new ArrayList(rowSize);
       for (int i = 0; i < rowSize; i++) {
-        strings[i] = selector.lookupName(row.get(i));
+        list.add(selector.lookupName(row.get(i)));
       }
-      return Arrays.asList(strings);
+      return list;
     }
   }
 
@@ -223,7 +224,8 @@ public interface DimensionSelector extends ColumnValueSelector<Object>, Dimensio
      * calling DimensionSelector.constant(null), so that it's impossible to mistakely use NullDimensionSelector in
      * instanceof statements. {@link #isNilSelector} method should be used instead.
      */
-    private static class NullDimensionSelector implements SingleValueHistoricalDimensionSelector, IdLookup<String>
+    private static class NullDimensionSelector<ValType extends Comparable<ValType>>
+        implements SingleValueHistoricalDimensionSelector<ValType>, IdLookup<ValType>
     {
       private NullDimensionSelector()
       {
@@ -268,7 +270,7 @@ public interface DimensionSelector extends ColumnValueSelector<Object>, Dimensio
 
       @Override
       @Nullable
-      public String lookupName(int id)
+      public ValType lookupName(int id)
       {
         assert id == 0 : "id = " + id;
         return null;
@@ -288,7 +290,7 @@ public interface DimensionSelector extends ColumnValueSelector<Object>, Dimensio
       }
 
       @Override
-      public int lookupId(@Nullable String name)
+      public int lookupId(@Nullable ValType name)
       {
         return NullHandling.isNullOrEquivalent(name) ? 0 : -1;
       }

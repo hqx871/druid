@@ -26,7 +26,7 @@ import org.apache.druid.segment.data.IndexedInts;
 /**
  * Specialization for {@link DimensionSelector} queryable via offsets from {@link HistoricalCursor}.
  */
-public interface HistoricalDimensionSelector extends DimensionSelector
+public interface HistoricalDimensionSelector<ValType> extends DimensionSelector<ValType>
 {
   @CalledFromHotLoop
   IndexedInts getRow(int offset);

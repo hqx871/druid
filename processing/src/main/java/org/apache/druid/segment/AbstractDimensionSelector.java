@@ -26,7 +26,8 @@ import javax.annotation.Nullable;
  * Don't extend this abstract class if you could provide a more efficient implementation for those methods, implement
  * {@link DimensionSelector} directly then.
  */
-public abstract class AbstractDimensionSelector implements DimensionSelector
+public abstract class AbstractDimensionSelector<ValType>
+    implements DimensionSelector<ValType>
 {
 
   @Nullable

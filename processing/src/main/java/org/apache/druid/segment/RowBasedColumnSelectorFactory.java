@@ -198,7 +198,7 @@ public class RowBasedColumnSelectorFactory<T> implements ColumnSelectorFactory
     } else {
       final Function<T, Object> dimFunction = adapter.columnFunction(dimension);
 
-      return new DimensionSelector()
+      return new DimensionSelector<String>()
       {
         private long currentId = NO_ID;
         private List<String> dimensionValues;

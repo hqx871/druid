@@ -21,7 +21,9 @@ package org.apache.druid.segment.serde;
 
 import com.google.common.base.Supplier;
 import org.apache.druid.segment.column.DictionaryEncodedColumn;
+import org.apache.druid.segment.column.LongDictionaryEncodedColumn;
 import org.apache.druid.segment.column.StringDictionaryEncodedColumn;
+import org.apache.druid.segment.column.ValueType;
 import org.apache.druid.segment.data.CachingIndexed;
 import org.apache.druid.segment.data.ColumnarInts;
 import org.apache.druid.segment.data.ColumnarMultiInts;
@@ -31,17 +33,21 @@ import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
 
 /**
+ *
  */
-public class DictionaryEncodedColumnSupplier implements Supplier<DictionaryEncodedColumn<?>>
+public class DictionaryEncodedColumnSupplier<ValType extends Comparable<ValType>>
+    implements Supplier<DictionaryEncodedColumn<?>>
 {
-  private final GenericIndexed<String> dictionary;
+  private final GenericIndexed<ValType> dictionary;
   private final GenericIndexed<ByteBuffer> dictionaryUtf8;
   private final @Nullable Supplier<ColumnarInts> singleValuedColumn;
   private final @Nullable Supplier<ColumnarMultiInts> multiValuedColumn;
   private final int lookupCacheSize;
+  private final ValueType valueType;
 
   public DictionaryEncodedColumnSupplier(
-      GenericIndexed<String> dictionary,
+      ValueType valueType,
+      GenericIndexed<ValType> dictionary,
       GenericIndexed<ByteBuffer> dictionaryUtf8,
       @Nullable Supplier<ColumnarInts> singleValuedColumn,
       @Nullable Supplier<ColumnarMultiInts> multiValuedColumn,
@@ -53,16 +59,26 @@ public class DictionaryEncodedColumnSupplier implements Supplier<DictionaryEncod
     this.singleValuedColumn = singleValuedColumn;
     this.multiValuedColumn = multiValuedColumn;
     this.lookupCacheSize = lookupCacheSize;
+    this.valueType = valueType;
   }
 
   @Override
   public DictionaryEncodedColumn<?> get()
   {
-    return new StringDictionaryEncodedColumn(
-        singleValuedColumn != null ? singleValuedColumn.get() : null,
-        multiValuedColumn != null ? multiValuedColumn.get() : null,
-        new CachingIndexed<>(dictionary, lookupCacheSize),
-        dictionaryUtf8.singleThreaded()
-    );
+    if (valueType == ValueType.LONG) {
+      return new LongDictionaryEncodedColumn(
+          singleValuedColumn != null ? singleValuedColumn.get() : null,
+          multiValuedColumn != null ? multiValuedColumn.get() : null,
+          new CachingIndexed(dictionary, lookupCacheSize),
+          dictionaryUtf8.singleThreaded()
+      );
+    } else {
+      return new StringDictionaryEncodedColumn(
+          singleValuedColumn != null ? singleValuedColumn.get() : null,
+          multiValuedColumn != null ? multiValuedColumn.get() : null,
+          new CachingIndexed(dictionary, lookupCacheSize),
+          dictionaryUtf8.singleThreaded()
+      );
+    }
   }
 }

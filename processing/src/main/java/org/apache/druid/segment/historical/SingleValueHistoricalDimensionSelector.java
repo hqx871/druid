@@ -21,7 +21,7 @@ package org.apache.druid.segment.historical;
 
 import org.apache.druid.query.monomorphicprocessing.CalledFromHotLoop;
 
-public interface SingleValueHistoricalDimensionSelector extends HistoricalDimensionSelector
+public interface SingleValueHistoricalDimensionSelector<ValType> extends HistoricalDimensionSelector<ValType>
 {
   @CalledFromHotLoop
   int getRowValue(int offset);

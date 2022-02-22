@@ -218,9 +218,9 @@ public class DummyStringVirtualColumn implements VirtualColumn
     return (StringDictionaryEncodedColumn) column;
   }
 
-  private DimensionSelector disableValueMatchers(DimensionSelector base)
+  private DimensionSelector disableValueMatchers(DimensionSelector<String> base)
   {
-    return new DimensionSelector()
+    return new DimensionSelector<String>()
     {
       @Override
       public IndexedInts getRow()

@@ -38,7 +38,7 @@ import java.util.Objects;
  *   (i.e. we never revisit a timestamp we have seen before, unless it is the same as the last accessed one)
  * - it also applies and caches extraction function values at the {@link DimensionSelector} level to speed things up
  */
-public class SingleScanTimeDimensionSelector implements DimensionSelector
+public class SingleScanTimeDimensionSelector implements DimensionSelector<String>
 {
   private final ExtractionFn extractionFn;
   private final BaseLongColumnValueSelector selector;

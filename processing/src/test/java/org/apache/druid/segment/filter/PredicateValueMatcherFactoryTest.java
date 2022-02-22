@@ -28,6 +28,7 @@ import org.apache.druid.query.filter.ValueMatcher;
 import org.apache.druid.segment.DimensionSelector;
 import org.apache.druid.segment.SimpleAscendingOffset;
 import org.apache.druid.segment.column.ColumnType;
+import org.apache.druid.segment.column.ValueType;
 import org.apache.druid.segment.data.GenericIndexed;
 import org.apache.druid.segment.data.VSizeColumnarInts;
 import org.apache.druid.segment.data.VSizeColumnarMultiInts;
@@ -67,7 +68,8 @@ public class PredicateValueMatcherFactoryTest extends InitializedNullHandlingTes
   public void testDimensionProcessorMultiValuedDimensionMatchingValue()
   {
     // Emulate multi-valued dimension
-    final DictionaryEncodedColumnSupplier columnSupplier = new DictionaryEncodedColumnSupplier(
+    final DictionaryEncodedColumnSupplier columnSupplier = new DictionaryEncodedColumnSupplier<>(
+        ValueType.STRING,
         GenericIndexed.fromIterable(ImmutableList.of("v1", "v2", "v3"), GenericIndexed.STRING_STRATEGY),
         GenericIndexed.fromIterable(
             ImmutableList.of(
@@ -91,6 +93,7 @@ public class PredicateValueMatcherFactoryTest extends InitializedNullHandlingTes
   {
     // Emulate multi-valued dimension
     final DictionaryEncodedColumnSupplier columnSupplier = new DictionaryEncodedColumnSupplier(
+        ValueType.STRING,
         GenericIndexed.fromIterable(ImmutableList.of("v1", "v2", "v3"), GenericIndexed.STRING_STRATEGY),
         GenericIndexed.fromIterable(
             ImmutableList.of(

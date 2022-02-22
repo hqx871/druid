@@ -32,7 +32,7 @@ import java.util.Objects;
 
 public class MultiValueStringVectorValueMatcher implements VectorValueMatcherFactory
 {
-  private final MultiValueDimensionVectorSelector selector;
+  private final MultiValueDimensionVectorSelector<String> selector;
 
   public MultiValueStringVectorValueMatcher(final MultiValueDimensionVectorSelector selector)
   {

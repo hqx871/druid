@@ -414,7 +414,7 @@ public abstract class BaseFilterTest extends InitializedNullHandlingTest
     Sequence<List<String>> seq = Sequences.map(
         cursors,
         cursor -> {
-          final DimensionSelector selector = cursor
+          final DimensionSelector<String> selector = cursor
               .getColumnSelectorFactory()
               .makeDimensionSelector(new DefaultDimensionSpec(selectColumn, selectColumn));
 
@@ -554,7 +554,7 @@ public abstract class BaseFilterTest extends InitializedNullHandlingTest
     Sequence<List<String>> seq = Sequences.map(
         cursors,
         cursor -> {
-          final DimensionSelector selector = cursor
+          final DimensionSelector<String> selector = cursor
               .getColumnSelectorFactory()
               .makeDimensionSelector(new DefaultDimensionSpec(selectColumn, selectColumn));
 
@@ -637,7 +637,7 @@ public abstract class BaseFilterTest extends InitializedNullHandlingTest
     };
 
     try (final VectorCursor cursor = makeVectorCursor(postFilteringFilter)) {
-      final SingleValueDimensionVectorSelector selector = cursor
+      final SingleValueDimensionVectorSelector<String> selector = cursor
           .getColumnSelectorFactory()
           .makeSingleValueDimensionSelector(new DefaultDimensionSpec(selectColumn, selectColumn));
 
@@ -661,7 +661,7 @@ public abstract class BaseFilterTest extends InitializedNullHandlingTest
   )
   {
     try (final VectorCursor cursor = makeVectorCursor(makeFilter(filter))) {
-      final SingleValueDimensionVectorSelector selector = cursor
+      final SingleValueDimensionVectorSelector<String> selector = cursor
           .getColumnSelectorFactory()
           .makeSingleValueDimensionSelector(new DefaultDimensionSpec(selectColumn, selectColumn));
 

@@ -368,7 +368,7 @@ public class IndexedTableJoinMatcher implements JoinMatcher
       );
     }
 
-    private IntList getRowNumbers(DimensionSelector selector, int dimensionId)
+    private IntList getRowNumbers(DimensionSelector<String> selector, int dimensionId)
     {
       final String key = selector.lookupName(dimensionId);
       return index.find(key);

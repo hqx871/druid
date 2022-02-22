@@ -26,7 +26,7 @@ import org.apache.druid.segment.column.ColumnType;
 
 /**
  */
-public abstract class BaseFilteredDimensionSpec implements DimensionSpec
+public abstract class BaseFilteredDimensionSpec<ValType extends Comparable<ValType>> implements DimensionSpec<ValType>
 {
   protected final DimensionSpec delegate;
 
@@ -38,7 +38,7 @@ public abstract class BaseFilteredDimensionSpec implements DimensionSpec
   }
 
   @JsonProperty
-  public DimensionSpec getDelegate()
+  public DimensionSpec<ValType> getDelegate()
   {
     return delegate;
   }

@@ -21,6 +21,7 @@ package org.apache.druid.segment.serde;
 
 import org.apache.druid.collections.bitmap.BitmapFactory;
 import org.apache.druid.collections.bitmap.ImmutableBitmap;
+import org.apache.druid.segment.DimensionHandlerUtils;
 import org.apache.druid.segment.column.BitmapIndex;
 import org.apache.druid.segment.data.GenericIndexed;
 
@@ -30,20 +31,20 @@ import javax.annotation.Nullable;
  * Provides {@link BitmapIndex} for some dictionary encoded column, where the dictionary and bitmaps are stored in some
  * {@link GenericIndexed}.
  */
-public class StringBitmapIndexColumnPartSupplier extends DictionaryBitmapIndexColumnPartSupplier<String>
+public class LongBitmapIndexColumnPartSupplier extends DictionaryBitmapIndexColumnPartSupplier<Long>
 {
-  public StringBitmapIndexColumnPartSupplier(
+  public LongBitmapIndexColumnPartSupplier(
       BitmapFactory bitmapFactory,
       GenericIndexed<ImmutableBitmap> bitmaps,
-      GenericIndexed<String> dictionary
+      GenericIndexed<Long> dictionary
   )
   {
     super(bitmapFactory, bitmaps, dictionary);
   }
 
   @Override
-  protected String parseStringValue(@Nullable String value)
+  protected Long parseStringValue(@Nullable String value)
   {
-    return value;
+    return DimensionHandlerUtils.convertObjectToLong(value);
   }
 }

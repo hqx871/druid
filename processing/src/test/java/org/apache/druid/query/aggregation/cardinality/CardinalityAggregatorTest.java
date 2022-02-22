@@ -61,7 +61,7 @@ import java.util.Map;
 
 public class CardinalityAggregatorTest
 {
-  public static class TestDimensionSelector extends AbstractDimensionSelector
+  public static class TestDimensionSelector extends AbstractDimensionSelector<String>
   {
     private final List<Integer[]> column;
     private final Map<String, Integer> ids;

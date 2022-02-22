@@ -31,7 +31,7 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Objects;
 
-public class ConstantMultiValueDimensionSelector implements HistoricalDimensionSelector
+public class ConstantMultiValueDimensionSelector implements HistoricalDimensionSelector<String>
 {
   private final List<String> values;
   private final RangeIndexedInts row;

@@ -25,6 +25,7 @@ import com.google.common.primitives.Ints;
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import org.apache.druid.collections.bitmap.BitmapFactory;
 import org.apache.druid.collections.bitmap.MutableBitmap;
+import org.apache.druid.common.config.NullHandling;
 import org.apache.druid.data.input.impl.DimensionSchema.MultiValueHandling;
 import org.apache.druid.java.util.common.ISE;
 import org.apache.druid.java.util.common.guava.Comparators;
@@ -98,13 +99,15 @@ public abstract class MultiValueDictionaryDimensionIndexer<ValType extends Compa
         encodedDimensionValues = IntArrays.EMPTY_ARRAY;
       } else if (dimValuesList.size() == 1) {
         //encodedDimensionValues = new int[]{dimLookup.add(emptyToNullIfNeeded(dimValuesList.get(0)))};
-        encodedDimensionValues = new int[]{dimLookup.add(parseValueAndReplaceWithDefault(dimValuesList.get(0)))};
+        encodedDimensionValues = new int[]{
+            dimLookup.add(parseAndReplaceZeroOrEquivalentToNullIfNeeded(dimValuesList.get(0)))
+        };
       } else {
         hasMultipleValues = true;
         final List<ValType> dimensionValues = new ArrayList<>(dimValuesList.size());
         for (int i = 0; i < dimValuesList.size(); i++) {
           //dimensionValues[i] = emptyToNullIfNeeded(dimValuesList.get(i));
-          dimensionValues.add(parseValueAndReplaceWithDefault(dimValuesList.get(i)));
+          dimensionValues.add(parseAndReplaceZeroOrEquivalentToNullIfNeeded(dimValuesList.get(i)));
         }
         if (multiValueHandling.needSorting()) {
           // Sort multival row by their unencoded values first.
@@ -130,7 +133,7 @@ public abstract class MultiValueDictionaryDimensionIndexer<ValType extends Compa
         encodedDimensionValues = pos == retVal.length ? retVal : Arrays.copyOf(retVal, pos);
       }
     } else {
-      encodedDimensionValues = new int[]{dimLookup.add(parseValueAndReplaceWithDefault(dimValues))};
+      encodedDimensionValues = new int[]{dimLookup.add(parseAndReplaceZeroOrEquivalentToNullIfNeeded(dimValues))};
     }
 
     // If dictionary size has changed, the sorted lookup is no longer valid.
@@ -267,7 +270,7 @@ public abstract class MultiValueDictionaryDimensionIndexer<ValType extends Compa
     // (for example: nulls getting generated for empty arrays, or calls to lookupId).
     final int maxId = getCardinality();
 
-    class IndexerDimensionSelector implements DimensionSelector, IdLookup<ValType>
+    class IndexerDimensionSelector implements DimensionSelector<String>, IdLookup<String>
     {
       private final ArrayBasedIndexedInts indexedInts = new ArrayBasedIndexedInts();
 
@@ -327,7 +330,7 @@ public abstract class MultiValueDictionaryDimensionIndexer<ValType extends Compa
       {
         if (extractionFn == null) {
           //final int valueId = lookupId(value);
-          final int valueId = lookupId(value == null ? null : parseStringValue(value));
+          final int valueId = lookupId(value);
           if (valueId >= 0 || value == null) {
             return new ValueMatcher()
             {
@@ -396,7 +399,9 @@ public abstract class MultiValueDictionaryDimensionIndexer<ValType extends Compa
                   return true;
                 }
               } else {
-                final boolean matches = predicate.apply(lookupName(id));
+                Comparable val = lookupName(id);
+                String strVal = val == null ? null : String.valueOf(val);
+                final boolean matches = predicate.apply(strVal);
                 checkedIds.set(id);
                 if (matches) {
                   matchingIds.set(id);
@@ -428,8 +433,10 @@ public abstract class MultiValueDictionaryDimensionIndexer<ValType extends Compa
           // Sanity check; IDs beyond maxId should not be known to callers. (See comment above.)
           throw new ISE("id[%d] >= maxId[%d]", id, maxId);
         }
-        final String strValue = convertToStringName(getActualValue(id, false));
-        return extractionFn == null ? strValue : extractionFn.apply(strValue);
+        final ValType strValue = getActualValue(id, false);
+        return extractionFn == null
+               ? (strValue == null ? null : String.valueOf(strValue))
+               : extractionFn.apply(strValue);
       }
 
       @Override
@@ -440,13 +447,13 @@ public abstract class MultiValueDictionaryDimensionIndexer<ValType extends Compa
 
       @Nullable
       @Override
-      public IdLookup<ValType> idLookup()
+      public IdLookup<String> idLookup()
       {
         return extractionFn == null ? this : null;
       }
 
       @Override
-      public int lookupId(ValType name)
+      public int lookupId(String name)
       {
         if (extractionFn != null) {
           throw new UnsupportedOperationException(
@@ -454,7 +461,7 @@ public abstract class MultiValueDictionaryDimensionIndexer<ValType extends Compa
           );
         }
 
-        final int id = getEncodedValue(name, false);
+        final int id = getEncodedValue(parseStringValue(name), false);
 
         if (id < maxId) {
           return id;
@@ -508,11 +515,13 @@ public abstract class MultiValueDictionaryDimensionIndexer<ValType extends Compa
       return null;
     }
     if (key.length == 1) {
-      return getActualValue(key[0], false);
+      ValType val = getActualValue(key[0], false);
+      return nullToZeroOrEquivalentIfNeeded(val);
     } else {
       List<ValType> rowArray = new ArrayList<>(key.length);
       for (int id : key) {
         ValType val = getActualValue(id, false);
+        val = nullToZeroOrEquivalentIfNeeded(val);
         rowArray.add(val);
       }
       return rowArray;
@@ -542,10 +551,16 @@ public abstract class MultiValueDictionaryDimensionIndexer<ValType extends Compa
   protected abstract Class<ValType> getValueClass();
 
   @Nullable
-  protected abstract String convertToStringName(@Nullable ValType name);
+  protected ValType parseAndReplaceZeroOrEquivalentToNullIfNeeded(@Nullable Object o)
+  {
+    ValType val = (ValType) DimensionHandlerUtils.convertObjectToType(o, columnType);
+    return NullHandling.zeroOrEquivalentToNullIfNeeded(val, getValueClass());
+  }
 
-  @Nullable
-  protected abstract ValType parseValueAndReplaceWithDefault(@Nullable Object value);
+  protected ValType nullToZeroOrEquivalentIfNeeded(@Nullable ValType val)
+  {
+    return NullHandling.nullToZeroOrEquivalentIfNeeded(val, getValueClass());
+  }
 
   @Nullable
   protected abstract ValType parseStringValue(@Nullable String value);

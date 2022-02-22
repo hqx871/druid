@@ -32,7 +32,7 @@ import java.nio.ByteBuffer;
 /**
  *
  */
-public class PrefixFilteredDimensionSpec extends BaseFilteredDimensionSpec
+public class PrefixFilteredDimensionSpec extends BaseFilteredDimensionSpec<String>
 {
 
   private static final byte CACHE_TYPE_ID = 0x4;
@@ -55,7 +55,7 @@ public class PrefixFilteredDimensionSpec extends BaseFilteredDimensionSpec
   }
 
   @Override
-  public DimensionSelector decorate(final DimensionSelector selector)
+  public DimensionSelector decorate(final DimensionSelector<String> selector)
   {
     if (selector == null) {
       return null;
@@ -63,7 +63,7 @@ public class PrefixFilteredDimensionSpec extends BaseFilteredDimensionSpec
 
     final int selectorCardinality = selector.getValueCardinality();
     if (selectorCardinality < 0 || !selector.nameLookupPossibleInAdvance()) {
-      return new PredicateFilteredDimensionSelector(
+      return new PredicateFilteredDimensionSelector<>(
           selector,
           input -> {
             String val = NullHandling.nullToEmptyIfNeeded(input);

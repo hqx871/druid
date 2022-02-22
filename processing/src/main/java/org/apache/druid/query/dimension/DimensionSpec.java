@@ -45,7 +45,7 @@ import javax.annotation.Nullable;
     @JsonSubTypes.Type(name = "prefixFiltered", value = PrefixFilteredDimensionSpec.class)
 })
 @SubclassesMustOverrideEqualsAndHashCode
-public interface DimensionSpec extends Cacheable
+public interface DimensionSpec<ValType extends Comparable<ValType>> extends Cacheable
 {
   String getDimension();
 
@@ -63,7 +63,7 @@ public interface DimensionSpec extends Cacheable
    * extraction functions in the case of {@link ExtractionDimensionSpec}, regex filtering in the case of
    * {@link RegexFilteredDimensionSpec}, and so on).
    */
-  DimensionSelector decorate(DimensionSelector selector);
+  DimensionSelector<ValType> decorate(DimensionSelector<ValType> selector);
 
   /**
    * Vectorized analog of {@link #decorate(DimensionSelector)} for {@link SingleValueDimensionVectorSelector}, most

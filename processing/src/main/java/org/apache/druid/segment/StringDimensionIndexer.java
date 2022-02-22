@@ -106,14 +106,7 @@ public class StringDimensionIndexer extends MultiValueDictionaryDimensionIndexer
 
   @Nullable
   @Override
-  protected String convertToStringName(@Nullable String name)
-  {
-    return name;
-  }
-
-  @Nullable
-  @Override
-  protected String parseValueAndReplaceWithDefault(@Nullable Object value)
+  protected String parseAndReplaceZeroOrEquivalentToNullIfNeeded(@Nullable Object value)
   {
     return emptyToNullIfNeeded(value);
   }

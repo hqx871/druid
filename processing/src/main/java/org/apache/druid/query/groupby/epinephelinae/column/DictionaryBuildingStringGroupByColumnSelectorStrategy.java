@@ -79,7 +79,7 @@ public class DictionaryBuildingStringGroupByColumnSelectorStrategy extends Strin
   @Override
   public void initColumnValues(ColumnValueSelector selector, int columnIndex, Object[] valuess)
   {
-    final DimensionSelector dimSelector = (DimensionSelector) selector;
+    final DimensionSelector<String> dimSelector = (DimensionSelector) selector;
     final IndexedInts row = dimSelector.getRow();
     ArrayBasedIndexedInts newRow = (ArrayBasedIndexedInts) valuess[columnIndex];
     if (newRow == null) {
@@ -106,7 +106,7 @@ public class DictionaryBuildingStringGroupByColumnSelectorStrategy extends Strin
   @Override
   public Object getOnlyValue(ColumnValueSelector selector)
   {
-    final DimensionSelector dimSelector = (DimensionSelector) selector;
+    final DimensionSelector<String> dimSelector = (DimensionSelector) selector;
     final IndexedInts row = dimSelector.getRow();
 
     Preconditions.checkState(row.size() < 2, "Not supported for multi-value dimensions");

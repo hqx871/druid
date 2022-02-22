@@ -158,7 +158,7 @@ public abstract class DictionaryEncodedColumnIndexer<KeyType, ActualType extends
   public ColumnValueSelector convertUnsortedValuesToSorted(ColumnValueSelector selectorWithUnsortedValues)
   {
     DimensionSelector dimSelectorWithUnsortedValues = (DimensionSelector) selectorWithUnsortedValues;
-    class SortedDimensionSelector implements DimensionSelector, IndexedInts
+    class SortedDimensionSelector implements DimensionSelector<String>, IndexedInts
     {
       @Override
       public int size()

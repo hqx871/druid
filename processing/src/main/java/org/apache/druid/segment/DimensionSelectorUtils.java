@@ -191,7 +191,8 @@ public final class DimensionSelectorUtils
             if (checkedIds.get(id)) {
               matches = matchingIds.get(id);
             } else {
-              matches = predicate.apply(selector.lookupName(id));
+              Object val = selector.lookupName(id);
+              matches = predicate.apply(val == null ? null : String.valueOf(val));
               checkedIds.set(id);
               if (matches) {
                 matchingIds.set(id);
@@ -232,7 +233,8 @@ public final class DimensionSelectorUtils
           return matchNull;
         } else {
           for (int i = 0; i < size; ++i) {
-            if (predicate.apply(selector.lookupName(row.get(i)))) {
+            Object val = selector.lookupName(row.get(i));
+            if (predicate.apply(val == null ? null : String.valueOf(val))) {
               return true;
             }
           }
@@ -257,7 +259,8 @@ public final class DimensionSelectorUtils
     int cardinality = selector.getValueCardinality();
     BitSet valueIds = new BitSet(cardinality);
     for (int i = 0; i < cardinality; i++) {
-      if (predicate.apply(selector.lookupName(i))) {
+      Object val = selector.lookupName(i);
+      if (predicate.apply(val == null ? null : String.valueOf(val))) {
         valueIds.set(i);
       }
     }

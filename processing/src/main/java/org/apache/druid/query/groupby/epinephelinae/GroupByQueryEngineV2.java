@@ -405,13 +405,16 @@ public class GroupByQueryEngineV2
     {
       switch (capabilities.getType()) {
         case STRING:
-          DimensionSelector dimSelector = (DimensionSelector) selector;
+          DimensionSelector<String> dimSelector = (DimensionSelector) selector;
           if (dimSelector.getValueCardinality() >= 0) {
             return new StringGroupByColumnSelectorStrategy(dimSelector::lookupName, capabilities);
           } else {
             return new DictionaryBuildingStringGroupByColumnSelectorStrategy();
           }
         case LONG:
+          if (capabilities.hasBitmapIndexes()) {
+            return new LongGroupByColumnSelectorStrategy();
+          }
           return makeNullableNumericStrategy(new LongGroupByColumnSelectorStrategy());
         case FLOAT:
           return makeNullableNumericStrategy(new FloatGroupByColumnSelectorStrategy());

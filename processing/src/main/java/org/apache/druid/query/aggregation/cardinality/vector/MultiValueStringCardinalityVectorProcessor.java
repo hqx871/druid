@@ -30,7 +30,7 @@ import java.nio.ByteBuffer;
 
 public class MultiValueStringCardinalityVectorProcessor implements CardinalityVectorProcessor
 {
-  private final MultiValueDimensionVectorSelector selector;
+  private final MultiValueDimensionVectorSelector<String> selector;
 
   public MultiValueStringCardinalityVectorProcessor(final MultiValueDimensionVectorSelector selector)
   {

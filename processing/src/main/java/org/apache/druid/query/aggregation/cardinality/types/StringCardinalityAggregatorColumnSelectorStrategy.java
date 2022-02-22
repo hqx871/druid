@@ -29,7 +29,7 @@ import org.apache.druid.segment.data.IndexedInts;
 import javax.annotation.Nullable;
 import java.util.Arrays;
 
-public class StringCardinalityAggregatorColumnSelectorStrategy implements CardinalityAggregatorColumnSelectorStrategy<DimensionSelector>
+public class StringCardinalityAggregatorColumnSelectorStrategy implements CardinalityAggregatorColumnSelectorStrategy<DimensionSelector<String>>
 {
   public static final String CARDINALITY_AGG_NULL_STRING = "\u0000";
   public static final char CARDINALITY_AGG_SEPARATOR = '\u0001';
@@ -45,7 +45,7 @@ public class StringCardinalityAggregatorColumnSelectorStrategy implements Cardin
   }
 
   @Override
-  public void hashRow(DimensionSelector dimSelector, Hasher hasher)
+  public void hashRow(DimensionSelector<String> dimSelector, Hasher hasher)
   {
     final IndexedInts row = dimSelector.getRow();
     final int size = row.size();
@@ -85,7 +85,7 @@ public class StringCardinalityAggregatorColumnSelectorStrategy implements Cardin
   }
 
   @Override
-  public void hashValues(DimensionSelector dimSelector, HyperLogLogCollector collector)
+  public void hashValues(DimensionSelector<String> dimSelector, HyperLogLogCollector collector)
   {
     IndexedInts row = dimSelector.getRow();
     for (int i = 0, rowSize = row.size(); i < rowSize; i++) {
